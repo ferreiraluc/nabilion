@@ -3,19 +3,19 @@ from funcoes_bybit import busca_velas, tem_trade_aberto, saldo_da_conta, quantid
 from utilidades import quantidade_cripto_para_operar
 import time
 
-cripto = 'BTCUSDT'
-tempo_grafico = '60'
+cripto = 'SOLUSDT'
+tempo_grafico = '15'
 qtd_velas_stop = 17
-risco_retorno = 3
+risco_retorno = 4.1
 emas = [9, 21]
 ema_rapida = emas[0]
 ema_lenta = emas[1]
-alavancagem = 10
+alavancagem = 1
 
 
 print('Bot started', flush=True)
 print(f'Cripto: {cripto}', flush=True)
-print(f'Tempo gráfico: {tempo_grafico}', flush=True)
+print(f'Tempo grafico: {tempo_grafico}', flush=True)
 print(f'Velas Stop: {qtd_velas_stop}', flush=True)
 print(f'Risco/Retorno: {risco_retorno}', flush=True)
 print(f'EMAs: {emas}', flush=True)
@@ -25,9 +25,9 @@ for tentativa in range(5):
     try:
         estado_de_trade, preco_entrada, preco_stop, preco_alvo = tem_trade_aberto(cripto)
         print(f'Estado de trade: {estado_de_trade}', flush=True)
-        print(f'Preço de entrada: {preco_entrada}', flush=True)
-        print(f'Preço de stop: {preco_stop}', flush=True)
-        print(f'Preço de alvo: {preco_alvo}', flush=True)
+        print(f'Preco de entrada: {preco_entrada}', flush=True)
+        print(f'Preco de stop: {preco_stop}', flush=True)
+        print(f'Preco de alvo: {preco_alvo}', flush=True)
         break
 
     except Exception as e:
@@ -81,7 +81,7 @@ while True:
                 if df['close'].iloc[-2] > df[f'EMA_{ema_rapida}'].iloc[-2] and df['close'].iloc[-2] > df[f'EMA_{ema_lenta}'].iloc[-2]:
                     #verificar se a vela atual superou a maxima da vela refencia
                     if df['high'].iloc[-1] > df['high'].iloc[-2]:
-                        saldo = saldo_da_conta()
+                        saldo = saldo_da_conta() * alavancagem
                         
                         qtidade_minima_para_operar = quantidade_minima_para_operar(cripto)
                         

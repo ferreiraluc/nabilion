@@ -35,8 +35,6 @@ def busca_velas(cripto, tempo_grafico, emas):
 
 def tem_trade_aberto(cripto):
     resposta = cliente.get_positions(category='linear', symbol=cripto, recv_window=50000)
-    print(resposta)
-    
     dados = resposta['result']['list'][0]
 
     preco_entrada = dados['avgPrice']
