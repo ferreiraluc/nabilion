@@ -71,12 +71,12 @@ while True:
                 if df['high'].iloc[-1] >= preco_alvo:
                     estado_de_trade = EstadoDeTrade.DE_FORA
                     vela_fechou_trade = df['open_time'].iloc[-1]
-                    print(f'Bateu alvo na vela que abriu {df['open_time'].iloc[-1]}, no preço de {preco_alvo}', flush=True)
+                    print(f"Bateu alvo na vela que abriu {df['open_time'].iloc[-1]}, no preço de {preco_alvo}", flush=True)
                     print('-' * 10)
                 elif df['low'].iloc[-1] <= preco_stop:
                     estado_de_trade = EstadoDeTrade.DE_FORA
                     vela_fechou_trade = df['open_time'].iloc[-1]
-                    print(f'Bateu stop na vela que abriu {df['open_time'].iloc[-1]}, no preço de {preco_stop}', flush=True)
+                    print(f"Bateu stop na vela que abriu {df['open_time'].iloc[-1]}, no preço de {preco_stop}", flush=True)
                     print('-' * 10)
                 # Avaliação se o trade foi fechado na mão na corretora, ela devolve o estado de trade DE_FORA
                 elif tem_trade_aberto(cripto)[0] == EstadoDeTrade.DE_FORA:
@@ -104,7 +104,7 @@ while True:
                         
                         abre_compra(cripto, qtd_cripto_para_operar, preco_stop, preco_alvo)
                         
-                        print(f'Entrou na compra da vela que abriu {df['open_time'].iloc[-1]}, Preco de entrada: {preco_entrada}, preco stop: {preco_stop}, preco alvo: {preco_alvo}')
+                        print(f"Entrou na compra da vela que abriu {df['open_time'].iloc[-1]}, Preco de entrada: {preco_entrada}, preco stop: {preco_stop}, preco alvo: {preco_alvo}")
                         estado_de_trade = EstadoDeTrade.COMPRADO
                         print('-' * 10)
                         
