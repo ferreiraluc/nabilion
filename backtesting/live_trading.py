@@ -1,7 +1,18 @@
+from pybit.unified_trading import HTTP
 from estado_trade import EstadoDeTrade
 from funcoes_bybit import busca_velas, tem_trade_aberto, saldo_da_conta, quantidade_minima_para_operar, abre_compra
 from utilidades import quantidade_cripto_para_operar
 import time
+from dotenv import load_dotenv
+import os   
+
+
+load_dotenv()
+
+API_KEY = os.getenv('BYBIT_API_KEY')
+SECRET_KEY = os.getenv('BYBIT_API_SECRET')
+
+cliente = HTTP(api_key=API_KEY, api_secret=SECRET_KEY)
 
 cripto = 'SOLUSDT'
 tempo_grafico = '15'
