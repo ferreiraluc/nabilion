@@ -106,6 +106,6 @@ while True:
         print(f'Erro desconhecido: {e}', flush=True)
     
     time.sleep(0.25)    
-df = busca_velas(cripto, tempo_grafico, emas)
+
 
 
