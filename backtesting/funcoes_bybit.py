@@ -78,7 +78,7 @@ def quantidade_minima_para_operar(cripto):
 def abre_compra(cripto, qtd_cripto_para_operar, preco_stop, preco_alvo):
     cliente.place_order(
         category='linear',
-        symbol=cripto,
+        symbol=cripto,  
         side='Buy',
         orderType='Market',
         qty=qtd_cripto_para_operar,
