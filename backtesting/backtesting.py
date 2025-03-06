@@ -7,7 +7,7 @@ from results_manager import ResultsManager
 
 cliente = HTTP()
 
-start = '2024-12-01'
+start = '2025-03-01'
 #end = '2024-12-31'
 end = datetime.now().strftime('%Y-%m-%d')
 
@@ -17,11 +17,11 @@ end_timestamp = int(pd.to_datetime(end).timestamp()) * 1000
 velas_sem_estrutura = []
 
 # variaveis para o trade
-cripto = 'BTCUSDT'
-tempo_grafico = '60'
+cripto = 'SOLUSDT'
+tempo_grafico = '1'
 saldo = 1000
-risco_retorno = 6
-qntd_velas_stop = 17
+risco_retorno = 1.3
+qntd_velas_stop = 34
 taxa_corretora = 0.055
 setup = 'trade estruturado de risco/retorno com duas emas'
 
