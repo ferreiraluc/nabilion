@@ -1,6 +1,5 @@
 from pybit.unified_trading import HTTP
-import pandas as pd
-import numpy as np
+from funcoes_bybit import busca_velas
 import time
 from dotenv import load_dotenv
 import os
@@ -26,25 +25,25 @@ print('Bot Started')
 print(f'Trading {cripto} on {tempo_grafico} min chart with trend from {higher_timeframe} min')
 
 # Function to fetch candlestick data
-def busca_velas(cripto, tempo, emas):
-    response = cliente.get_kline(symbol=cripto, interval=tempo, limit=100)
-    candles = response['result']['list'][::-1]
+# def busca_velas(cripto, tempo, emas):
+#     response = cliente.get_kline(symbol=cripto, interval=tempo, limit=100)
+#     candles = response['result']['list'][::-1]
 
-    df = pd.DataFrame(candles, columns=['open_time', 'open', 'high', 'low', 'close', 'volume', 'turnover'])
-    df['open_time'] = pd.to_datetime(df['open_time'].astype(np.int64), unit='ms')
-    df['open'] = df['open'].astype(float)
-    df['high'] = df['high'].astype(float)
-    df['low'] = df['low'].astype(float)
-    df['close'] = df['close'].astype(float)
+#     df = pd.DataFrame(candles, columns=['open_time', 'open', 'high', 'low', 'close', 'volume', 'turnover'])
+#     df['open_time'] = pd.to_datetime(df['open_time'].astype(np.int64), unit='ms')
+#     df['open'] = df['open'].astype(float)
+#     df['high'] = df['high'].astype(float)
+#     df['low'] = df['low'].astype(float)
+#     df['close'] = df['close'].astype(float)
     
-    for ema in emas:
-        df[f'EMA_{ema}'] = df['close'].ewm(span=ema, adjust=False).mean()
+#     for ema in emas:
+#         df[f'EMA_{ema}'] = df['close'].ewm(span=ema, adjust=False).mean()
     
-    # ATR Calculation
-    df['ATR'] = df['high'] - df['low']
-    df['ATR'] = df['ATR'].rolling(14).mean()
+#     # ATR Calculation
+#     df['ATR'] = df['high'] - df['low']
+#     df['ATR'] = df['ATR'].rolling(14).mean()
     
-    return df
+#     return df
 
 # Function to check open trades
 def tem_trade_aberto(cripto):

@@ -16,8 +16,8 @@ cliente = HTTP(api_key=API_KEY, api_secret=SECRET_KEY)
 
 cripto = 'SOLUSDT'
 tempo_grafico = '1'
-qtd_velas_stop = 17
-risco_retorno = 3
+qtd_velas_stop = 34
+risco_retorno = 1.3
 emas = [9, 21]
 ema_rapida = emas[0]
 ema_lenta = emas[1]

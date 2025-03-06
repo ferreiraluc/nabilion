@@ -76,6 +76,7 @@ def quantidade_minima_para_operar(cripto):
     return float(quantidade_minima_para_operar)
 
 def abre_compra(cripto, qtd_cripto_para_operar, preco_stop, preco_alvo):
+    cliente.set_leverage(symbol=cripto, leverage=20)
     cliente.place_order(
         category='linear',
         symbol=cripto,  
