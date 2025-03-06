@@ -50,12 +50,24 @@ def busca_velas(cripto, tempo, emas):
 def tem_trade_aberto(cripto):
     response = cliente.get_positions(category='linear', symbol=cripto)
     if not response['result']['list']:
-        return None, 0, 0, 0
+        return None, 0, 0, 0  # No open position
 
     pos = response['result']['list'][0]
     side = pos['side']
-    estado = 'LONG' if side == 'Buy' else 'SHORT' if side == 'Sell' else None
-    return estado, float(pos['avgPrice']), float(pos['stopLoss']), float(pos['takeProfit'])
+
+    # Handling missing values
+    preco_entrada = float(pos['avgPrice']) if pos['avgPrice'] else 0
+    preco_stop = float(pos['stopLoss']) if pos['stopLoss'] else 0
+    preco_alvo = float(pos['takeProfit']) if pos['takeProfit'] else 0
+
+    estado = None
+    if side == 'Buy':
+        estado = 'LONG'
+    elif side == 'Sell':
+        estado = 'SHORT'
+
+    return estado, preco_entrada, preco_stop, preco_alvo
+
 
 # Function to fetch account balance
 def saldo_da_conta():
