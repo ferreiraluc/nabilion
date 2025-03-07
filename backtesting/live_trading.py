@@ -21,7 +21,7 @@ risco_retorno = 2.3
 emas = [9, 21]
 ema_rapida = emas[0]
 ema_lenta = emas[1]
-alavancagem = 1
+alavancagem = 20
 
 
 print('Bot started', flush=True)
