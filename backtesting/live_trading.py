@@ -1,6 +1,6 @@
 from pybit.unified_trading import HTTP
 from estado_trade import EstadoDeTrade
-from funcoes_bybit import busca_velas, tem_trade_aberto, saldo_da_conta, quantidade_minima_para_operar, abre_compra
+from funcoes_bybit import busca_velas, tem_trade_aberto, saldo_da_conta, quantidade_minima_para_operar, abre_compra, set_leverage
 from utilidades import quantidade_cripto_para_operar
 import time
 from dotenv import load_dotenv
@@ -15,13 +15,13 @@ SECRET_KEY = os.getenv('BYBIT_API_SECRET')
 cliente = HTTP(api_key=API_KEY, api_secret=SECRET_KEY)
 
 cripto = 'SOLUSDT'
-tempo_grafico = '15'
-qtd_velas_stop = 25
-risco_retorno = 1.9
+tempo_grafico = '60'
+qtd_velas_stop = 17
+risco_retorno = 2.5
 emas = [9, 21]
 ema_rapida = emas[0]
 ema_lenta = emas[1]
-alavancagem = 5
+alavancagem = 1
 
 
 print('Bot started', flush=True)
@@ -60,8 +60,7 @@ while True:
         
         if df.empty:
             print('DataFrame vazio')
-        else: 
-            
+        else:
             if estado_de_trade == EstadoDeTrade.COMPRADO:
                 print('esta comprado')
                 print('buscando saida no stop ou no alvo...')
@@ -101,7 +100,6 @@ while True:
                         preco_entrada = df['high'].iloc[-2]
                         preco_stop = df['low'].iloc[-qtd_velas_stop: -1].min()
                         preco_alvo = ((preco_entrada - preco_stop) * risco_retorno) + preco_entrada
-                        
                         abre_compra(cripto, qtd_cripto_para_operar, preco_stop, preco_alvo)
                         
                         print(f"Entrou na compra da vela que abriu {df['open_time'].iloc[-1]}, Preco de entrada: {preco_entrada}, preco stop: {preco_stop}, preco alvo: {preco_alvo}")

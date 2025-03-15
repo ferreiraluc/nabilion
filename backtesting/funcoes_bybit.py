@@ -87,6 +87,22 @@ def abre_compra(cripto, qtd_cripto_para_operar, preco_stop, preco_alvo):
         takeProfit=preco_alvo
     )
     
+def abre_compra_spot(cripto):
+    cliente.set_leverage(
+        category='linear',  # Para contratos perpétuos USDT
+        symbol=cripto,
+        buyLeverage=10,  # Alavancagem para compra
+        sellLeverage=10 
+    )
+    print(f"Alavancagem configurada para 10x no símbolo {cripto}", flush=True)
+    cliente.place_order(
+        category='spot',
+        symbol=cripto,  
+        side='Buy',
+        orderType='Market',
+        qty=10
+    )
+    
 def abre_venda(cripto, qtd_cripto_para_operar, preco_stop, preco_alvo):
     cliente.place_order(
         category='linear',
@@ -97,3 +113,17 @@ def abre_venda(cripto, qtd_cripto_para_operar, preco_stop, preco_alvo):
         stopLoss=preco_stop,
         takeProfit=preco_alvo
     )
+    
+def set_leverage(cliente):
+    try:
+        resposta = cliente.set_leverage(
+            category='linear',  # Para contratos perpétuos USDT
+            symbol='BTCUSDT',
+            buyLeverage=10,  # Alavancagem para compra
+            sellLeverage=10  # Alavancagem para venda
+        )
+        print(f"Alavancagem configurada para 10x no símbolo BTCUSDT", flush=True)
+        return resposta
+    except Exception as e:
+        print(f"Erro ao configurar a alavancagem: {e}", flush=True)
+        return None
