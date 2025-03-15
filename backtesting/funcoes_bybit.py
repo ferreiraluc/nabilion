@@ -77,6 +77,12 @@ def quantidade_minima_para_operar(cripto):
 
 
 def abre_compra(cripto, qtd_cripto_para_operar, preco_stop, preco_alvo):
+    cliente.set_leverage(
+        category='linear',  # Para contratos perpétuos USDT
+        symbol=cripto,
+        buyLeverage=10,  # Alavancagem para compra
+        sellLeverage=10 
+    )
     cliente.place_order(
         category='linear',
         symbol=cripto,  
@@ -88,12 +94,6 @@ def abre_compra(cripto, qtd_cripto_para_operar, preco_stop, preco_alvo):
     )
     
 def abre_compra_spot(cripto):
-    cliente.set_leverage(
-        category='linear',  # Para contratos perpétuos USDT
-        symbol=cripto,
-        buyLeverage=10,  # Alavancagem para compra
-        sellLeverage=10 
-    )
     print(f"Alavancagem configurada para 10x no símbolo {cripto}", flush=True)
     cliente.place_order(
         category='spot',
