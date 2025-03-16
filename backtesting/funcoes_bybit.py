@@ -88,7 +88,6 @@ def abre_compra(cripto, qtd_cripto_para_operar, preco_stop, preco_alvo):
     )
     
 def abre_compra_spot(cripto):
-    print(f"Alavancagem configurada para 10x no símbolo {cripto}", flush=True)
     cliente.place_order(
         category='spot',
         symbol=cripto,  
