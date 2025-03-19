@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 import os
 import json
 from fpdf import FPDF
-from funcoes_bybit import saldo_da_conta, abre_compra_spot
+from funcoes_bybit import saldo_da_conta
+from utilidades import enviar_relatorio_por_email
 
 
 load_dotenv()
@@ -41,12 +42,25 @@ class PDF(FPDF):
             self.cell(col_widths[2], 10, str(compra['qtd_usdt']), 1)
             self.cell(col_widths[3], 10, f"{compra['preco_btc']:.2f}", 1)
             self.ln()
+    
+    def resumo_geral(self, saldo_atual, valor_investido, preco_medio, lucro_prejuizo, preco_atual):
+        self.set_font('Arial', 'B', 12)
+        self.cell(0, 10, 'Resumo Geral', 0, 1, 'C')
+        self.set_font('Arial', '', 10)
+        self.cell(0, 10, f"Saldo Atual: {saldo_atual:.2f} USDT", 0, 1)
+        self.cell(0, 10, f"Valor Total Investido: {valor_investido:.2f} USDT", 0, 1)
+        self.cell(0, 10, f"Preço Médio da Carteira: {preco_medio:.2f} USDT", 0, 1)
+        self.cell(0, 10, f"Preço Atual do BTC: {preco_atual:.2f} USDT", 0, 1)
+        self.cell(0, 10, f"Lucro/Prejuízo Potencial: {lucro_prejuizo:.2f} USDT", 0, 1)
+    
+    
 
 
 def salvar_historico(historico):
     with open(ARQUIVO_HISTORICO, 'w') as f:
         json.dump(historico, f, indent=4)
     print(f"Histórico salvo em {ARQUIVO_HISTORICO}", flush=True)
+
 
 def get_current_price(criptomoeda):
     try:
@@ -70,7 +84,7 @@ def obter_historico_compras_api():
                 data_compra = datetime.fromtimestamp(int(ordem['createdTime']) / 1000).strftime('%Y-%m-%d %H:%M:%S')
                 qtd_btc = float(ordem['qty'])
                 qtd_usdt = float(ordem['cumExecValue'])
-                preco_btc = qtd_usdt / qtd_btc  
+                preco_btc = qtd_usdt / qtd_btc if qtd_btc > 0 else 0
                 
                 compras.append({
                     'data': data_compra,
@@ -91,13 +105,27 @@ def obter_historico_compras_api():
         print(f"Erro ao obter histórico da API: {e}", flush=True)
         return None
 
-def gerar_relatorio_pdf(compras):
+def calcular_preco_medio(compras):
+    total_btc = sum(compra['qtd_btc'] for compra in compras)
+    total_usdt = sum(compra['qtd_usdt'] for compra in compras)
+    return total_usdt / total_btc if total_btc > 0 else 0
+
+def gerar_relatorio_pdf(historico, saldo_atual, preco_atual):
     pdf = PDF()
     pdf.add_page()
-    pdf.compra_table(compras)
+    pdf.compra_table(historico['compras'])
+    
+    valor_investido = sum(compra['qtd_usdt'] for compra in historico['compras'])
+    preco_medio = calcular_preco_medio(historico['compras'])
+    total_btc = sum(compra['qtd_btc'] for compra in historico['compras'])
+    valor_atual_carteira = total_btc * preco_atual
+    lucro_prejuizo = valor_atual_carteira - valor_investido
+    
+    pdf.ln(10)
+    pdf.resumo_geral(saldo_atual, valor_investido, preco_medio, lucro_prejuizo, preco_atual)
     pdf.output(ARQUIVO_RELATORIO)
     print(f"Relatório PDF gerado: {ARQUIVO_RELATORIO}", flush=True)
-
+    
 # Função principal
 def main():
     print("Robô de compra diária iniciado...", flush=True)
@@ -137,9 +165,13 @@ def main():
                 qtd_btc = VALOR_COMPRA / preco_btc
                 qtd_btc_str = f"{qtd_btc:.8f}"
                 
-                # Executa a compra com a quantidade calculada
-                abre_compra_spot(CRIPTOMOEDA)
-                
+                cliente.place_order(
+                    category='spot',
+                    symbol=CRIPTOMOEDA,
+                    side='Buy',
+                    orderType='Market',
+                    qty=qtd_btc_str
+                )
                 # Registra a compra
                 data_compra = agora.strftime('%Y-%m-%d %H:%M:%S')
                 nova_compra = {
@@ -154,6 +186,8 @@ def main():
                 
                 
                 gerar_relatorio_pdf(historico['compras'])
+                
+                enviar_relatorio_por_email()
                 
                 
                 print(f"Compra realizada:", flush=True)

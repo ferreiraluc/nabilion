@@ -87,14 +87,14 @@ def abre_compra(cripto, qtd_cripto_para_operar, preco_stop, preco_alvo):
         takeProfit=preco_alvo
     )
     
-def abre_compra_spot(cripto):
-    cliente.place_order(
-        category='spot',
-        symbol=cripto,  
-        side='Buy',
-        orderType='Market',
-        qty=10
-    )
+# def abre_compra_spot(cripto):
+#     cliente.place_order(
+#         category='spot',
+#         symbol=cripto,  
+#         side='Buy',
+#         orderType='Market',
+#         qty=10
+#     )
     
 def abre_venda(cripto, qtd_cripto_para_operar, preco_stop, preco_alvo):
     cliente.place_order(
