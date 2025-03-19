@@ -26,10 +26,21 @@ def busca_velas(cripto, tempo_grafico, emas):
     df['low'] = df['low'].astype(float)
     df['close'] = df['close'].astype(float)
     df['volume'] = df['volume'].astype(float)
+    
     ema_rapida = emas[0]
     ema_lenta = emas[1]
     df[f'EMA_{ema_rapida}'] = df['close'].ewm(span=ema_rapida, adjust=False).mean()
     df[f'EMA_{ema_lenta}'] = df['close'].ewm(span=ema_lenta, adjust=False).mean()
+    df['EMA_200'] = df['close'].ewm(span=200, adjust=False).mean()
+    
+    #Calcular RSI
+    delta = df['close'].diff()
+    gain = (delta.where(delta > 0, 0)).ewm(span=14).mean()
+    loss = (-delta.where(delta < 0, 0)).ewm(span=14).mean()
+    rs = gain / loss
+    df['RSI'] = 100 - (100 / (1 + rs))
+    
+    df['Volume_EMA_20'] = df['volume'].ewm(span=20, adjust=False).mean()
     
     return df
 
