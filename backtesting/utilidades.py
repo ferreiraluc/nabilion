@@ -1,15 +1,17 @@
 from decimal import Decimal, ROUND_DOWN
 import os
+from dotenv import load_dotenv
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
 import smtplib
 
+load_dotenv()
 # Configurações de e-mail
-EMAIL_SENDER = os.getenv('l.adrianobf@gmail.com')
-EMAIL_PASSWORD = os.getenv('anad rded ovdq upsl')
-EMAIL_RECEIVER = os.getenv('lucasadrianof@hotmail.com')
+EMAIL_SENDER = os.getenv('EMAIL_SENDER')
+EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
+EMAIL_RECEIVER = os.getenv('EMAIL_RECEIVER')
 
 ARQUIVO_RELATORIO = 'relatorio_compras.pdf'
 
