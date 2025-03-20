@@ -8,7 +8,7 @@ import json
 from fpdf import FPDF
 from funcoes_bybit import saldo_da_conta
 from utilidades import enviar_relatorio_por_email
-
+from decimal import Decimal, ROUND_DOWN
 
 load_dotenv()
 API_KEY = os.getenv('BYBIT_API_KEY')
@@ -19,7 +19,6 @@ CRIPTOMOEDA = 'BTCUSDT'
 VALOR_COMPRA = 10  
 ARQUIVO_HISTORICO = 'historico_compras.json'
 ARQUIVO_RELATORIO = 'relatorio_compras.pdf'
-
 
 class PDF(FPDF):
     def header(self):
@@ -52,15 +51,11 @@ class PDF(FPDF):
         self.cell(0, 10, f"Preço Médio da Carteira: {preco_medio:.2f} USDT", 0, 1)
         self.cell(0, 10, f"Preço Atual do BTC: {preco_atual:.2f} USDT", 0, 1)
         self.cell(0, 10, f"Lucro/Prejuízo Potencial: {lucro_prejuizo:.2f} USDT", 0, 1)
-    
-    
-
 
 def salvar_historico(historico):
     with open(ARQUIVO_HISTORICO, 'w') as f:
         json.dump(historico, f, indent=4)
     print(f"Histórico salvo em {ARQUIVO_HISTORICO}", flush=True)
-
 
 def get_current_price(criptomoeda):
     try:
@@ -72,9 +67,24 @@ def get_current_price(criptomoeda):
         print(f"Erro ao obter preço: {e}", flush=True)
         return None
 
+def obter_quantidade_minima(criptomoeda):
+    try:
+        resposta = cliente.get_instruments_info(category='spot', symbol=criptomoeda)
+        min_order_qty = float(resposta['result']['list'][0]['lotSizeFilter']['minOrderQty'])
+        return min_order_qty
+    except Exception as e:
+        print(f"Erro ao obter quantidade mínima: {e}", flush=True)
+        return None
+
+def ajustar_quantidade(qtd_btc, min_order_qty):
+    qtd_btc_decimal = Decimal(str(qtd_btc))
+    min_order_qty_decimal = Decimal(str(min_order_qty))
+    qtd_ajustada = max(qtd_btc_decimal, min_order_qty_decimal)
+    qtd_ajustada = (qtd_ajustada / min_order_qty_decimal).to_integral() * min_order_qty_decimal
+    return str(qtd_ajustada.quantize(min_order_qty_decimal, rounding=ROUND_DOWN))
+
 def obter_historico_compras_api():
     try:
-        # Busca todas as ordens de compra concluídas (limit=100, ajustável)
         historico = cliente.get_order_history(category='spot', symbol=CRIPTOMOEDA, side='Buy', limit=100)
         compras = []
         ultima_data = None
@@ -92,7 +102,6 @@ def obter_historico_compras_api():
                     'qtd_usdt': qtd_usdt,
                     'preco_btc': preco_btc
                 })
-                # A última compra é a mais recente
                 if not ultima_data or datetime.strptime(data_compra, '%Y-%m-%d %H:%M:%S') > datetime.strptime(ultima_data, '%Y-%m-%d %H:%M:%S'):
                     ultima_data = data_compra
 
@@ -125,12 +134,10 @@ def gerar_relatorio_pdf(historico, saldo_atual, preco_atual):
     pdf.resumo_geral(saldo_atual, valor_investido, preco_medio, lucro_prejuizo, preco_atual)
     pdf.output(ARQUIVO_RELATORIO)
     print(f"Relatório PDF gerado: {ARQUIVO_RELATORIO}", flush=True)
-    
-# Função principal
+
 def main():
     print("Robô de compra diária iniciado...", flush=True)
     
-    # Carrega histórico da API ao iniciar
     historico = obter_historico_compras_api()
     if historico:
         salvar_historico(historico)
@@ -139,6 +146,8 @@ def main():
         print("Erro ao carregar histórico da API. Não será possível continuar.", flush=True)
         return 
 
+    ultima_data_relatorio = None
+
     while True:
         agora = datetime.now()
         dia_atual = agora.date()
@@ -146,7 +155,6 @@ def main():
                         if historico['ultima_compra'] else None)
         print(f"Verificando: Dia atual = {dia_atual}, Última compra = {ultima_compra}", flush=True)
 
-        
         if ultima_compra is None or ultima_compra < dia_atual:
             try:
                 preco_btc = get_current_price(CRIPTOMOEDA)
@@ -163,35 +171,41 @@ def main():
                     continue
 
                 qtd_btc = VALOR_COMPRA / preco_btc
-                qtd_btc_str = f"{qtd_btc:.8f}"
-                
+                min_order_qty = obter_quantidade_minima(CRIPTOMOEDA)
+                if min_order_qty is None:
+                    print("Falha ao obter quantidade mínima. Tentando novamente em 1 hora...", flush=True)
+                    time.sleep(3600)
+                    continue
+
+                qtd_btc_str = ajustar_quantidade(qtd_btc, min_order_qty)
+                valor_ajustado = float(qtd_btc_str) * preco_btc
+
+                if valor_ajustado < VALOR_COMPRA:
+                    print(f"Quantidade ajustada ({qtd_btc_str} BTC) resulta em valor ({valor_ajustado:.2f} USDT) menor que o mínimo desejado ({VALOR_COMPRA} USDT). Aumentando quantidade...", flush=True)
+                    qtd_btc = (VALOR_COMPRA / preco_btc) * 1.1  # Aumenta 10% para garantir
+                    qtd_btc_str = ajustar_quantidade(qtd_btc, min_order_qty)
+
                 cliente.place_order(
                     category='spot',
                     symbol=CRIPTOMOEDA,
                     side='Buy',
                     orderType='Market',
-                    qty=10
+                    qty=qtd_btc_str
                 )
-                # Registra a compra
+                
                 data_compra = agora.strftime('%Y-%m-%d %H:%M:%S')
                 nova_compra = {
                     'data': data_compra,
-                    'qtd_btc': qtd_btc,
-                    'qtd_usdt': VALOR_COMPRA,
+                    'qtd_btc': float(qtd_btc_str),
+                    'qtd_usdt': float(qtd_btc_str) * preco_btc,  # Ajusta o valor real pago
                     'preco_btc': preco_btc
                 }
                 historico['compras'].append(nova_compra)
                 historico['ultima_compra'] = dia_atual.strftime('%Y-%m-%d')
                 salvar_historico(historico)
                 
-                
-                gerar_relatorio_pdf(historico['compras'], saldo, preco_btc)
-                
-                enviar_relatorio_por_email()
-                
-                
                 print(f"Compra realizada:", flush=True)
-                print(f"Valor da compra: {VALOR_COMPRA} USDT", flush=True)
+                print(f"Valor da compra: {nova_compra['qtd_usdt']:.2f} USDT", flush=True)
                 print(f"Quantidade da compra: {qtd_btc_str} BTC", flush=True)
                 print(f"Data da compra: {data_compra}", flush=True)
                 print(f"Valor do Bitcoin: {preco_btc:.2f} USDT", flush=True)
@@ -205,6 +219,22 @@ def main():
         else:
             print(f"Já comprou hoje ({ultima_compra}). Aguardando próximo dia...", flush=True)
 
+        try:
+            preco_btc = get_current_price(CRIPTOMOEDA)
+            if preco_btc is None:
+                print("Falha ao obter preço para o relatório. Tentando novamente em 1 hora...", flush=True)
+                time.sleep(3600)
+                continue
+
+            saldo = saldo_da_conta()
+            if ultima_data_relatorio is None or ultima_data_relatorio < dia_atual:
+                gerar_relatorio_pdf(historico, saldo, preco_btc)
+                enviar_relatorio_por_email()
+                ultima_data_relatorio = dia_atual
+                print(f"Relatório gerado e enviado para o dia {dia_atual}", flush=True)
+
+        except Exception as e:
+            print(f"Erro ao gerar/enviar relatório: {e}", flush=True)
 
         time.sleep(3600)
 
