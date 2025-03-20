@@ -170,7 +170,7 @@ def main():
                     symbol=CRIPTOMOEDA,
                     side='Buy',
                     orderType='Market',
-                    qty=qtd_btc_str
+                    qty=10
                 )
                 # Registra a compra
                 data_compra = agora.strftime('%Y-%m-%d %H:%M:%S')
