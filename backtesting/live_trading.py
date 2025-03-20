@@ -20,7 +20,7 @@ risco_retorno = 2.5
 emas = [9, 21]
 ema_rapida = emas[0]
 ema_lenta = emas[1]
-alavancagem = 2
+alavancagem = 10
 
 print('Bot started', flush=True)
 print(f'Cripto: {cripto}', flush=True)
