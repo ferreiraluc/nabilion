@@ -185,7 +185,7 @@ def main():
                 salvar_historico(historico)
                 
                 
-                gerar_relatorio_pdf(historico['compras'])
+                gerar_relatorio_pdf(historico['compras'], saldo preco_btc)
                 
                 enviar_relatorio_por_email()
                 
