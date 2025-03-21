@@ -191,7 +191,7 @@ def main():
                     symbol=CRIPTOMOEDA,
                     side='Buy',
                     orderType='Market',
-                    qty=qtd_btc_str
+                    qty=10
                 )
                 
                 # Buscar os detalhes da ordem para obter os valores reais
