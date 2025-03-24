@@ -13,7 +13,7 @@ SECRET_KEY = os.getenv('BYBIT_API_SECRET')
 
 cliente = HTTP(api_key=API_KEY, api_secret=SECRET_KEY)
 
-cripto = 'MUBARAKUSDT'
+cripto = 'LTCUSDT'
 tempo_grafico = '15'
 qtd_velas_stop = 17
 risco_retorno = 2.5
