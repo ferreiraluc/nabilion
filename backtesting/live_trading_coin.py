@@ -13,10 +13,10 @@ SECRET_KEY = os.getenv('BYBIT_API_SECRET')
 
 cliente = HTTP(api_key=API_KEY, api_secret=SECRET_KEY)
 
-cripto = 'DOGEUSDT'
+cripto = 'MUBARAKUSDT'
 tempo_grafico = '15'
 qtd_velas_stop = 17
-risco_retorno = 1.7
+risco_retorno = 2.5
 emas = [9, 21]
 ema_rapida = emas[0]
 ema_lenta = emas[1]
