@@ -16,11 +16,11 @@ cliente = HTTP(api_key=API_KEY, api_secret=SECRET_KEY)
 cripto = 'SOLUSDT'
 tempo_grafico = '15'
 qtd_velas_stop = 17
-risco_retorno = 2.5
+risco_retorno = 1.7
 emas = [9, 21]
 ema_rapida = emas[0]
 ema_lenta = emas[1]
-alavancagem = 4
+alavancagem = 3
 
 print('Bot started', flush=True)
 print(f'Cripto: {cripto}', flush=True)
