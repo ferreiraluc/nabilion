@@ -4,6 +4,9 @@ import numpy as np
 from estado_trade import EstadoDeTrade
 from dotenv import load_dotenv
 import os   
+from utilidades import ajusta_start_time
+from data_loader import obter_caminho_velas, carregar_velas_json, salvar_velas_json
+
 
 
 load_dotenv()
@@ -131,3 +134,38 @@ def set_leverage(cliente):
     except Exception as e:
         print(f"Erro ao configurar a alavancagem: {e}", flush=True)
         return None
+    
+def carregar_dados_historicos(cripto, tempo_grafico, emas, start, end, pular_velas=999):
+    start_ajustado = ajusta_start_time(start, tempo_grafico, pular_velas)
+    start_timestamp = int(pd.to_datetime(start_ajustado).timestamp() * 1000)
+    end_timestamp =  int(pd.to_datetime(end).timestamp() * 1000)
+
+    caminho_arquivo = obter_caminho_velas(cripto, tempo_grafico, start, end)
+    velas_sem_estrutura = carregar_velas_json(caminho_arquivo)
+
+    if velas_sem_estrutura is None:
+        velas_sem_estrutura = []
+
+        while start_timestamp < end_timestamp:
+            resposta = cliente.get_kline(symbol=cripto, interval=tempo_grafico, limit=1000, start=start_timestamp)
+            velas_sem_estrutura += resposta['result']['list'][::-1]
+            start_timestamp = int(velas_sem_estrutura[-1][0]) + 1000
+
+        salvar_velas_json(caminho_arquivo, velas_sem_estrutura)
+
+    colunas = ['tempo_abertura', 'abertura', 'maxima', 'minima', 'fechamento', 'volume', 'turnover']
+
+    df = pd.DataFrame(velas_sem_estrutura, columns=colunas)
+
+    df['tempo_abertura'] = pd.to_datetime(df['tempo_abertura'].astype(np.int64), unit='ms')
+    df['abertura'] = df['abertura'].astype(float)
+    df['maxima'] = df['maxima'].astype(float)
+    df['minima'] = df['minima'].astype(float)
+    df['fechamento'] = df['fechamento'].astype(float)
+    df['volume'] = df['volume'].astype(float)
+
+    ema_rapida = emas[0]
+    ema_lenta = emas[1]
+    df[f'EMA_{ema_rapida}'] = df['fechamento'].ewm(span=ema_rapida, adjust=False).mean()
+    df[f'EMA_{ema_lenta}'] = df['fechamento'].ewm(span=ema_lenta, adjust=False).mean()
+    return df

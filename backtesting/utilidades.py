@@ -1,7 +1,7 @@
 from decimal import Decimal, ROUND_DOWN
 import os
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
@@ -45,3 +45,21 @@ def enviar_relatorio_por_email():
         print("Relatório enviado por e-mail com sucesso!", flush=True)
     except Exception as e:
         print(f"Erro ao enviar e-mail: {e}", flush=True)
+        
+def ajusta_start_time(start_time, tempo_grafico, pular_velas=999):
+    start_datetime = datetime.strptime(start_time, '%Y-%m-%d')
+    minutos_para_subtrair = pular_velas * int(tempo_grafico)
+    novo_datetime = start_datetime - timedelta(minutes=minutos_para_subtrair)
+    return novo_datetime.strftime('%Y-%m-%d %H:%M')
+
+def calcula_percentual_perda_na_compra(preco_compra, preco_stop):
+    return ((preco_compra - preco_stop) / preco_compra) * 100
+
+def calcula_percentual_lucro_na_compra(preco_compra, preco_alvo):
+    return ((preco_alvo - preco_compra) / preco_compra) * 100
+
+def calcula_percentual_perda_na_venda(preco_venda, preco_stop):
+    return ((preco_stop - preco_venda) / preco_venda) * 100
+
+def calcula_percentual_lucro_na_venda(preco_venda, preco_alvo):
+    return ((preco_venda - preco_alvo) / preco_venda) * 100
