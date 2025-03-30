@@ -161,5 +161,7 @@ for i in range(max(200, qntd_velas_stop) + 1, len(df)):
             estado_de_trade = EstadoDeTrade.VENDIDO
             print(f"Venda na vela que abriu {df['open_time'].iloc[i]}, Entrada: {preco_entrada}, Stop: {preco_stop}, Alvo: {preco_alvo}, Tamanho: {tamanho_posicao:.2f}")
             resultados.update_on_trade_open(ano, mes)
+            
+            #testando
 
 resultados.get_results()
