@@ -13,10 +13,10 @@ SECRET_KEY = os.getenv('BYBIT_API_SECRET')
 
 cliente = HTTP(api_key=API_KEY, api_secret=SECRET_KEY)
 
-cripto = 'SOLUSDT'
-tempo_grafico = '15'
-qtd_velas_stop = 25
-risco_retorno = 4.1
+cripto = 'XRPUSDT'
+tempo_grafico = '60'
+qtd_velas_stop = 17
+risco_retorno = 3.1
 emas = [9, 21]
 ema_rapida = emas[0]
 ema_lenta = emas[1]
