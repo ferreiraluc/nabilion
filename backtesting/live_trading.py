@@ -102,12 +102,13 @@ while True:
                 print('Procurando trades...')
                 
                 # Condição para compra
-                if (df['close'].iloc[-2] > df[f'EMA_{ema_rapida}'].iloc[-2] and 
-                    df['close'].iloc[-2] > df[f'EMA_{ema_lenta}'].iloc[-2] and 
-                    df['close'].iloc[-2] > df['EMA_200'].iloc[-2] and  # Tendência de alta
-                    df['RSI'].iloc[-1] < 70 and  # Não sobrecomprado
+                if (df['close'].iloc[-2] < df[f'EMA_{ema_rapida}'].iloc[-2] and 
+                    df['close'].iloc[-2] < df[f'EMA_{ema_lenta}'].iloc[-2] and 
+                    df['close'].iloc[-2] < df['EMA_200'].iloc[-2] and  # Tendência de baixa
+                    df['RSI'].iloc[-1] > 30 and  # Não sobrevendido
                     df['volume'].iloc[-1] > df['Volume_EMA_20'].iloc[-1] and  # Volume confirma
-                    df['high'].iloc[-1] > df['high'].iloc[-2]):
+                    df['low'].iloc[-1] < df['low'].iloc[-2]): 
+                
                     
                     saldo = saldo_da_conta() * alavancagem
                     qtidade_minima_para_operar = quantidade_minima_para_operar(cripto)
@@ -124,12 +125,12 @@ while True:
                     print('-' * 10)
                 
                 # Condição para venda
-                elif (df['close'].iloc[-2] < df[f'EMA_{ema_rapida}'].iloc[-2] and 
-                      df['close'].iloc[-2] < df[f'EMA_{ema_lenta}'].iloc[-2] and 
-                      df['close'].iloc[-2] < df['EMA_200'].iloc[-2] and  # Tendência de baixa
-                      df['RSI'].iloc[-1] > 30 and  # Não sobrevendido
+                elif (df['close'].iloc[-2] > df[f'EMA_{ema_rapida}'].iloc[-2] and 
+                      df['close'].iloc[-2] > df[f'EMA_{ema_lenta}'].iloc[-2] and 
+                      df['close'].iloc[-2] > df['EMA_200'].iloc[-2] and  # Tendência de alta
+                      df['RSI'].iloc[-1] < 70 and  # Não sobrecomprado
                       df['volume'].iloc[-1] > df['Volume_EMA_20'].iloc[-1] and  # Volume confirma
-                      df['low'].iloc[-1] < df['low'].iloc[-2]):
+                      df['high'].iloc[-1] > df['high'].iloc[-2]):
                     
                     saldo = saldo_da_conta() * alavancagem
                     qtidade_minima_para_operar = quantidade_minima_para_operar(cripto)
