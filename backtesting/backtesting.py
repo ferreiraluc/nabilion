@@ -102,7 +102,7 @@ for i in range(max(200, qntd_velas_stop) + 1, len(df)):
             saldo += saldo * (profit_pct / 100)
             print(f"Bateu alvo na vela que abriu {df['open_time'].iloc[i]}, Preço: {preco_alvo}, Saldo: {saldo:.2f}")
             estado_de_trade = EstadoDeTrade.DE_FORA
-            resultados.update_on_profit(ano, mes, profit_pct)  # Método hipotético para lucro
+            resultados.update_on_gain(ano, mes, profit_pct)  # Método hipotético para lucro
         elif df['low'].iloc[i] <= preco_stop:
             loss_pct = ((preco_entrada - preco_stop) / preco_entrada) * 100 * alavancagem + (taxa_corretora * 2)
             saldo -= saldo * (loss_pct / 100)
@@ -116,7 +116,7 @@ for i in range(max(200, qntd_velas_stop) + 1, len(df)):
             saldo += saldo * (profit_pct / 100)
             print(f"Bateu alvo na vela que abriu {df['open_time'].iloc[i]}, Preço: {preco_alvo}, Saldo: {saldo:.2f}")
             estado_de_trade = EstadoDeTrade.DE_FORA
-            resultados.update_on_profit(ano, mes, profit_pct)
+            resultados.update_on_gain(ano, mes, profit_pct)
         elif df['high'].iloc[i] >= preco_stop:
             loss_pct = ((preco_stop - preco_entrada) / preco_entrada) * 100 * alavancagem + (taxa_corretora * 2)
             saldo -= saldo * (loss_pct / 100)

@@ -92,7 +92,7 @@ def executar_backtest(df, ema_rapida, ema_lenta, risco_por_trade, risco_retorno,
                 lucro_pct = ((preco_alvo - preco_entrada) / preco_entrada) * 100 * alavancagem - (taxa_corretora * 2)
                 saldo += saldo * (lucro_pct / 100)
                 estado = EstadoDeTrade.DE_FORA
-                resultados.update_on_profit(ano, mes, lucro_pct)
+                resultados.update_on_gain(ano, mes, lucro_pct)
             elif df['low'].iloc[i] <= preco_stop:
                 perda_pct = ((preco_entrada - preco_stop) / preco_entrada) * 100 * alavancagem + (taxa_corretora * 2)
                 saldo -= saldo * (perda_pct / 100)
@@ -104,7 +104,7 @@ def executar_backtest(df, ema_rapida, ema_lenta, risco_por_trade, risco_retorno,
                 lucro_pct = ((preco_entrada - preco_alvo) / preco_entrada) * 100 * alavancagem - (taxa_corretora * 2)
                 saldo += saldo * (lucro_pct / 100)
                 estado = EstadoDeTrade.DE_FORA
-                resultados.update_on_profit(ano, mes, lucro_pct)
+                resultados.update_on_gain(ano, mes, lucro_pct)
             elif df['high'].iloc[i] >= preco_stop:
                 perda_pct = ((preco_stop - preco_entrada) / preco_entrada) * 100 * alavancagem + (taxa_corretora * 2)
                 saldo -= saldo * (perda_pct / 100)
