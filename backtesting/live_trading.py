@@ -16,7 +16,7 @@ cliente = HTTP(api_key=API_KEY, api_secret=SECRET_KEY)
 cripto = 'XRPUSDT'
 tempo_grafico = '60'
 qtd_velas_stop = 17
-risco_retorno = 2.1
+risco_retorno = 7.1
 emas = [9, 21]
 ema_rapida = emas[0]
 ema_lenta = emas[1]
@@ -101,41 +101,18 @@ while True:
             elif estado_de_trade == EstadoDeTrade.DE_FORA and df['open_time'].iloc[-1] != vela_fechou_trade:
                 print('Procurando trades...')
                 
-                # Condição para venda
+                # Condição para compra
                 if (df['close'].iloc[-2] > df[f'EMA_{ema_rapida}'].iloc[-2] and 
                     df['close'].iloc[-2] > df[f'EMA_{ema_lenta}'].iloc[-2] and 
                     df['close'].iloc[-2] > df['EMA_200'].iloc[-2] and  # Tendência de alta
                     df['RSI'].iloc[-1] < 70 and  # Não sobrecomprado
+                    df['volume'].iloc[-1] > df['Volume_EMA_20'].iloc[-1] and  # Volume confirma
                     df['high'].iloc[-1] > df['high'].iloc[-2]):
                     
                     saldo = saldo_da_conta() * alavancagem
                     qtidade_minima_para_operar = quantidade_minima_para_operar(cripto)
                     qtd_cripto_para_operar = quantidade_cripto_para_operar(saldo, qtidade_minima_para_operar, df['close'].iloc[-1])
-
-                    preco_entrada = df['low'].iloc[-2]
-                    preco_stop = df['high'].iloc[-qtd_velas_stop: -1].max()
-                    preco_alvo = preco_entrada - ((preco_stop - preco_entrada) * risco_retorno)
                     
-                    abre_venda(cripto, qtd_cripto_para_operar, preco_stop, preco_alvo)
-                    
-                    print(f"Entrou na venda da vela que abriu {df['open_time'].iloc[-1]}, Preco de entrada: {preco_entrada}, preco stop: {preco_stop}, preco alvo: {preco_alvo}")
-                    estado_de_trade = EstadoDeTrade.VENDIDO
-                    print('-' * 10)
-
-                        
-        
-                
-                # Condição para compra
-                elif (df['close'].iloc[-2] < df[f'EMA_{ema_rapida}'].iloc[-2] and 
-                      df['close'].iloc[-2] < df[f'EMA_{ema_lenta}'].iloc[-2] and 
-                      df['close'].iloc[-2] < df['EMA_200'].iloc[-2] and  # Tendência de baixa
-                      df['RSI'].iloc[-1] > 30 and  # Não sobrevendido
-                      df['low'].iloc[-1] < df['low'].iloc[-2]):
-                    
-                    saldo = saldo_da_conta() * alavancagem
-                    qtidade_minima_para_operar = quantidade_minima_para_operar(cripto)
-                    qtd_cripto_para_operar = quantidade_cripto_para_operar(saldo, qtidade_minima_para_operar, df['close'].iloc[-1])
-
                     preco_entrada = df['high'].iloc[-2]
                     preco_stop = df['low'].iloc[-qtd_velas_stop: -1].min()
                     preco_alvo = ((preco_entrada - preco_stop) * risco_retorno) + preco_entrada
@@ -145,7 +122,28 @@ while True:
                     print(f"Entrou na compra da vela que abriu {df['open_time'].iloc[-1]}, Preco de entrada: {preco_entrada}, preco stop: {preco_stop}, preco alvo: {preco_alvo}")
                     estado_de_trade = EstadoDeTrade.COMPRADO
                     print('-' * 10)
+                
+                # Condição para venda
+                elif (df['close'].iloc[-2] < df[f'EMA_{ema_rapida}'].iloc[-2] and 
+                      df['close'].iloc[-2] < df[f'EMA_{ema_lenta}'].iloc[-2] and 
+                      df['close'].iloc[-2] < df['EMA_200'].iloc[-2] and  # Tendência de baixa
+                      df['RSI'].iloc[-1] > 30 and  # Não sobrevendido
+                      df['volume'].iloc[-1] > df['Volume_EMA_20'].iloc[-1] and  # Volume confirma
+                      df['low'].iloc[-1] < df['low'].iloc[-2]):
                     
+                    saldo = saldo_da_conta() * alavancagem
+                    qtidade_minima_para_operar = quantidade_minima_para_operar(cripto)
+                    qtd_cripto_para_operar = quantidade_cripto_para_operar(saldo, qtidade_minima_para_operar, df['close'].iloc[-1])
+                    
+                    preco_entrada = df['low'].iloc[-2]
+                    preco_stop = df['high'].iloc[-qtd_velas_stop: -1].max()
+                    preco_alvo = preco_entrada - ((preco_stop - preco_entrada) * risco_retorno)
+                    
+                    abre_venda(cripto, qtd_cripto_para_operar, preco_stop, preco_alvo)
+                    
+                    print(f"Entrou na venda da vela que abriu {df['open_time'].iloc[-1]}, Preco de entrada: {preco_entrada}, preco stop: {preco_stop}, preco alvo: {preco_alvo}")
+                    estado_de_trade = EstadoDeTrade.VENDIDO
+                    print('-' * 10)
             
     except ConnectionError as ce:
         print(f'Erro de conexão: {ce}', flush=True)
