@@ -182,4 +182,4 @@ while True:
     except Exception as e:
         print(f'Erro desconhecido: {e}', flush=True)
 
-    time.sleep(0.25)
+    time.sleep(1)
