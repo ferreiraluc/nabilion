@@ -24,7 +24,7 @@ ema_lenta = emas[1]
 alavancagem = 2
 
 # ===== Função para calcular ATR =====
-def calcular_atr(df, periodo=14):
+def calcular_atr(df, periodo=40):
     df['high_low'] = df['high'] - df['low']
     df['high_close'] = abs(df['high'] - df['close'].shift())
     df['low_close'] = abs(df['low'] - df['close'].shift())
@@ -133,7 +133,7 @@ while True:
                 df['high'].iloc[-1] > df['high'].iloc[-2]
             ):
                 preco_entrada = df['high'].iloc[-2]
-                preco_stop = preco_entrada - (atr_atual * 2)  # ======= STOP ATR 2x =======
+                preco_stop = preco_entrada - (atr_atual * 4)  # ======= STOP ATR 2x =======
 
                 # Filtro anti-stop ultra curto
                 if (preco_entrada - preco_stop) < atr_atual:
@@ -152,7 +152,7 @@ while True:
                 df['low'].iloc[-1] < df['low'].iloc[-2]
             ):
                 preco_entrada = df['low'].iloc[-2]
-                preco_stop = preco_entrada + (atr_atual * 2)  # ======= STOP ATR 2x =======
+                preco_stop = preco_entrada + (atr_atual * 4)  # ======= STOP ATR 2x =======
 
                 if (preco_stop - preco_entrada) < atr_atual:
                     print("Stop de venda muito curto comparado ao ATR, ignorando entrada.")
