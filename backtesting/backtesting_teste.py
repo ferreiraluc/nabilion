@@ -12,7 +12,7 @@ tempo_grafico = '15'
 data_inicio = '2024-01-01'
 data_fim = '2024-04-01'
 taxa_corretora = 0.055
-alavancagem = 2
+alavancagem = 1
 saldo_inicial = 1000
 setup = 'otimizacao de parametros'
 
@@ -78,7 +78,21 @@ def executar_backtest(df, ema_rapida, ema_lenta, risco_por_trade, risco_retorno,
     preco_stop = preco_alvo = preco_entrada = 0
     resultados = ResultsManager(saldo, taxa_corretora, setup)
     df = calcular_indicadores(df.copy(), ema_rapida, ema_lenta)
+
+    slippage_percent = 0.0005  # 0.05%
+    max_trades_per_day = 10
+    trade_count_today = 0
+    current_day = None
+    tamanho_posicao = saldo_inicial * 0.01  # Exemplo: operar sempre com 1% do saldo inicial
+
     for i in range(max(200, qntd_velas_stop) + 1, len(df)):
+        data_atual = df['open_time'].iloc[i].date()
+
+        # Limite de trades por dia
+        if data_atual != current_day:
+            current_day = data_atual
+            trade_count_today = 0
+
         ano = df['open_time'].iloc[i].year
         mes = df['open_time'].iloc[i].month
         resultados.initialize_month(ano, mes)
@@ -90,49 +104,69 @@ def executar_backtest(df, ema_rapida, ema_lenta, risco_por_trade, risco_retorno,
         if estado == EstadoDeTrade.COMPRADO:
             if df['high'].iloc[i] >= preco_alvo:
                 lucro_pct = ((preco_alvo - preco_entrada) / preco_entrada) * 100 * alavancagem - (taxa_corretora * 2)
-                saldo += saldo * (lucro_pct / 100)
+                lucro = tamanho_posicao * (lucro_pct / 100)
+                saldo += lucro
                 estado = EstadoDeTrade.DE_FORA
                 resultados.update_on_gain(ano, mes, lucro_pct)
             elif df['low'].iloc[i] <= preco_stop:
                 perda_pct = ((preco_entrada - preco_stop) / preco_entrada) * 100 * alavancagem + (taxa_corretora * 2)
-                saldo -= saldo * (perda_pct / 100)
+                perda = tamanho_posicao * (perda_pct / 100)
+                saldo -= perda
                 estado = EstadoDeTrade.DE_FORA
                 resultados.update_on_loss(ano, mes, perda_pct)
 
         elif estado == EstadoDeTrade.VENDIDO:
             if df['low'].iloc[i] <= preco_alvo:
                 lucro_pct = ((preco_entrada - preco_alvo) / preco_entrada) * 100 * alavancagem - (taxa_corretora * 2)
-                saldo += saldo * (lucro_pct / 100)
+                lucro = tamanho_posicao * (lucro_pct / 100)
+                saldo += lucro
                 estado = EstadoDeTrade.DE_FORA
                 resultados.update_on_gain(ano, mes, lucro_pct)
             elif df['high'].iloc[i] >= preco_stop:
                 perda_pct = ((preco_stop - preco_entrada) / preco_entrada) * 100 * alavancagem + (taxa_corretora * 2)
-                saldo -= saldo * (perda_pct / 100)
+                perda = tamanho_posicao * (perda_pct / 100)
+                saldo -= perda
                 estado = EstadoDeTrade.DE_FORA
                 resultados.update_on_loss(ano, mes, perda_pct)
 
-        elif estado == EstadoDeTrade.DE_FORA:
-            if (count_acima >= 9 and tendencia_alta and
-                rsi_min <= df['RSI'].iloc[i] <= rsi_max and
+        elif estado == EstadoDeTrade.DE_FORA and trade_count_today < max_trades_per_day:
+            # ===== COMPRA AGRESSIVA =====
+            if (
+                df['RSI'].iloc[i-1] < 30 and
                 df['volume'].iloc[i] > df['Volume_EMA_20'].iloc[i] and
-                df['ATR'].iloc[i] < df['ATR'].rolling(14).mean().iloc[i]):
-                preco_entrada = df['high'].iloc[i-1]
-                preco_stop = df['low'].iloc[i - qntd_velas_stop:i].min()
+                df['high'].iloc[i] > df['high'].iloc[i-1]
+            ):
+                stop_zone = df['low'].iloc[i - qntd_velas_stop:i]
+                if stop_zone.isnull().any() or stop_zone.empty:
+                    continue
+                preco_entrada = df['high'].iloc[i-1] * (1 + slippage_percent)
+                preco_stop = stop_zone.min() * (1 - slippage_percent)
                 preco_alvo = preco_entrada + (preco_entrada - preco_stop) * risco_retorno
                 estado = EstadoDeTrade.COMPRADO
                 resultados.update_on_trade_open(ano, mes)
-            elif (count_abaixo >= 9 and tendencia_baixa and
-                  rsi_min <= df['RSI'].iloc[i] <= rsi_max and
-                  df['volume'].iloc[i] > df['Volume_EMA_20'].iloc[i] and
-                  df['ATR'].iloc[i] < df['ATR'].rolling(14).mean().iloc[i]):
-                preco_entrada = df['low'].iloc[i-1]
-                preco_stop = df['high'].iloc[i - qntd_velas_stop:i].max()
+                trade_count_today += 1
+
+            # ===== VENDA AGRESSIVA =====
+            elif (
+                df['RSI'].iloc[i-1] > 70 and
+                df['volume'].iloc[i] > df['Volume_EMA_20'].iloc[i] and
+                df['low'].iloc[i] < df['low'].iloc[i-1]
+            ):
+                stop_zone = df['high'].iloc[i - qntd_velas_stop:i]
+                if stop_zone.isnull().any() or stop_zone.empty:
+                    continue
+                preco_entrada = df['low'].iloc[i-1] * (1 - slippage_percent)
+                preco_stop = stop_zone.max() * (1 + slippage_percent)
                 preco_alvo = preco_entrada - (preco_stop - preco_entrada) * risco_retorno
                 estado = EstadoDeTrade.VENDIDO
                 resultados.update_on_trade_open(ano, mes)
+                trade_count_today += 1
 
     resultados.get_results()
     return saldo
+
+
+
 
 def otimizar_estrategia(df):
     combinacoes = list(product(
