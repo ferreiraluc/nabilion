@@ -49,23 +49,20 @@ class ResultsManager:
             self.current_balance -= self.current_balance * ((self.broker_fee * self.leverage) / 100)
             self.results[year][month]['final_balance'] = self.current_balance
 
-    def update_on_gain(self, year: int, month: int, profit_percentage: float) -> None:
+    def update_on_gain(self, year: int, month: int, lucro_real: float) -> None:
         self.initialize_month(year, month)
         self.results[year][month]['profitable_trades'] += 1
-        self.results[year][month]['total_percentage_profit'] += (profit_percentage - self.broker_fee) * self.leverage
-        self.current_balance += self.current_balance * (((profit_percentage - self.broker_fee) * self.leverage) / 100)
+        self.current_balance += lucro_real
         self.results[year][month]['final_balance'] = self.current_balance
 
         if self.current_balance > self.max_balance:
             self.max_balance = self.current_balance
             self.min_balance_since_max = self.current_balance
 
-    def update_on_loss(self, year: int, month: int, loss_percentage: float) -> None:
+    def update_on_loss(self, year: int, month: int, perda_real: float) -> None:
         self.initialize_month(year, month)
         self.results[year][month]['unprofitable_trades'] += 1
-        self.results[year][month]['total_percentage_loss'] += (loss_percentage + self.broker_fee) * self.leverage
-
-        self.current_balance -= self.current_balance * (((loss_percentage + self.broker_fee) * self.leverage) / 100)
+        self.current_balance -= perda_real
         self.results[year][month]['final_balance'] = self.current_balance
 
         if self.current_balance < self.min_balance_since_max:
@@ -76,6 +73,7 @@ class ResultsManager:
 
         if drawdown > self.max_drawdown:
             self.max_drawdown = drawdown
+
 
     def get_results(self) -> None:
         print("Resultados por ano e mês:")

@@ -8,7 +8,7 @@ from itertools import product
 
 # Constantes de configuração
 cripto = 'BTCUSDT'
-tempo_grafico = '15'
+tempo_grafico = '1'
 data_inicio = '2024-01-01'
 data_fim = '2024-04-01'
 taxa_corretora = 0.055
@@ -107,7 +107,7 @@ def executar_backtest(df, ema_rapida, ema_lenta, risco_por_trade, risco_retorno,
                 lucro = tamanho_posicao * (lucro_pct / 100)
                 saldo += lucro
                 estado = EstadoDeTrade.DE_FORA
-                resultados.update_on_gain(ano, mes, lucro_pct)
+                resultados.update_on_gain(ano, mes, lucro)
             elif df['low'].iloc[i] <= preco_stop:
                 perda_pct = ((preco_entrada - preco_stop) / preco_entrada) * 100 * alavancagem + (taxa_corretora * 2)
                 perda = tamanho_posicao * (perda_pct / 100)
@@ -121,13 +121,13 @@ def executar_backtest(df, ema_rapida, ema_lenta, risco_por_trade, risco_retorno,
                 lucro = tamanho_posicao * (lucro_pct / 100)
                 saldo += lucro
                 estado = EstadoDeTrade.DE_FORA
-                resultados.update_on_gain(ano, mes, lucro_pct)
+                resultados.update_on_gain(ano, mes, lucro)
             elif df['high'].iloc[i] >= preco_stop:
                 perda_pct = ((preco_stop - preco_entrada) / preco_entrada) * 100 * alavancagem + (taxa_corretora * 2)
                 perda = tamanho_posicao * (perda_pct / 100)
                 saldo -= perda
                 estado = EstadoDeTrade.DE_FORA
-                resultados.update_on_loss(ano, mes, perda_pct)
+                resultados.update_on_loss(ano, mes, perda)
 
         elif estado == EstadoDeTrade.DE_FORA and trade_count_today < max_trades_per_day:
             # ===== COMPRA AGRESSIVA =====
