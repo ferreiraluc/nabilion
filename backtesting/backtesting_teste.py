@@ -10,9 +10,9 @@ from itertools import product
 cripto = 'BTCUSDT'
 tempo_grafico = '1'
 data_inicio = '2024-01-01'
-data_fim = '2024-04-01'
+data_fim = '2024-08-01'
 taxa_corretora = 0.055
-alavancagem = 1
+alavancagem = 10
 saldo_inicial = 1000
 setup = 'otimizacao de parametros'
 
@@ -20,6 +20,14 @@ class EstadoDeTrade(Enum):
     DE_FORA = 'de fora'
     COMPRADO = 'comprado'
     VENDIDO = 'vendido'
+
+def calcular_atr(df, periodo=14):
+    df['high_low'] = df['high'] - df['low']
+    df['high_close'] = abs(df['high'] - df['close'].shift())
+    df['low_close'] = abs(df['low'] - df['close'].shift())
+    df['tr'] = df[['high_low', 'high_close', 'low_close']].max(axis=1)
+    df['ATR'] = df['tr'].rolling(window=periodo).mean()
+    return df
 
 def buscar_dados_historicos():
     print("Carregando dados históricos...")
@@ -61,11 +69,13 @@ def calcular_indicadores(df, ema_rapida, ema_lenta):
     rs = gain / loss.replace(0, np.nan)
     df['RSI'] = 100 - (100 / (1 + rs)).fillna(100)
     df['Volume_EMA_20'] = df['volume'].ewm(span=20, adjust=False).mean()
-    df['ATR'] = (df['high'] - df['low']).rolling(window=14).mean()
     return df
 
 def contar_candles_consecutivos(df, index, ema_periodo):
-    janela = df.iloc[max(0, index - 30):index]
+    if index < 1:
+        return 0, 0
+    start = max(0, index - 30)
+    janela = df.iloc[start:index]
     acima = (janela['close'] > janela[f'EMA_{ema_periodo}']).astype(int)
     abaixo = (janela['close'] < janela[f'EMA_{ema_periodo}']).astype(int)
     count_acima = acima[::-1].cumprod().sum()
@@ -78,6 +88,7 @@ def executar_backtest(df, ema_rapida, ema_lenta, risco_por_trade, risco_retorno,
     preco_stop = preco_alvo = preco_entrada = 0
     resultados = ResultsManager(saldo, taxa_corretora, setup)
     df = calcular_indicadores(df.copy(), ema_rapida, ema_lenta)
+    df = calcular_atr(df)
 
     slippage_percent = 0.0005  # 0.05%
     max_trades_per_day = 10
@@ -100,6 +111,8 @@ def executar_backtest(df, ema_rapida, ema_lenta, risco_por_trade, risco_retorno,
         count_acima, count_abaixo = contar_candles_consecutivos(df, i, ema_rapida)
         tendencia_alta = df[f'EMA_{ema_rapida}'].iloc[i-1] > df[f'EMA_{ema_lenta}'].iloc[i-1] > df['EMA_200'].iloc[i-1]
         tendencia_baixa = df[f'EMA_{ema_rapida}'].iloc[i-1] < df[f'EMA_{ema_lenta}'].iloc[i-1] < df['EMA_200'].iloc[i-1]
+
+        atr_atual = df['ATR'].iloc[i-1]
 
         if estado == EstadoDeTrade.COMPRADO:
             if df['high'].iloc[i] >= preco_alvo:
@@ -136,11 +149,8 @@ def executar_backtest(df, ema_rapida, ema_lenta, risco_por_trade, risco_retorno,
                 df['volume'].iloc[i] > df['Volume_EMA_20'].iloc[i] and
                 df['high'].iloc[i] > df['high'].iloc[i-1]
             ):
-                stop_zone = df['low'].iloc[i - qntd_velas_stop:i]
-                if stop_zone.isnull().any() or stop_zone.empty:
-                    continue
                 preco_entrada = df['high'].iloc[i-1] * (1 + slippage_percent)
-                preco_stop = stop_zone.min() * (1 - slippage_percent)
+                preco_stop = preco_entrada - (atr_atual * 2)
                 preco_alvo = preco_entrada + (preco_entrada - preco_stop) * risco_retorno
                 estado = EstadoDeTrade.COMPRADO
                 resultados.update_on_trade_open(ano, mes)
@@ -152,11 +162,8 @@ def executar_backtest(df, ema_rapida, ema_lenta, risco_por_trade, risco_retorno,
                 df['volume'].iloc[i] > df['Volume_EMA_20'].iloc[i] and
                 df['low'].iloc[i] < df['low'].iloc[i-1]
             ):
-                stop_zone = df['high'].iloc[i - qntd_velas_stop:i]
-                if stop_zone.isnull().any() or stop_zone.empty:
-                    continue
                 preco_entrada = df['low'].iloc[i-1] * (1 - slippage_percent)
-                preco_stop = stop_zone.max() * (1 + slippage_percent)
+                preco_stop = preco_entrada + (atr_atual * 2)
                 preco_alvo = preco_entrada - (preco_stop - preco_entrada) * risco_retorno
                 estado = EstadoDeTrade.VENDIDO
                 resultados.update_on_trade_open(ano, mes)
