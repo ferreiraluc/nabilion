@@ -169,3 +169,25 @@ def carregar_dados_historicos(cripto, tempo_grafico, emas, start, end, pular_vel
     df[f'EMA_{ema_rapida}'] = df['fechamento'].ewm(span=ema_rapida, adjust=False).mean()
     df[f'EMA_{ema_lenta}'] = df['fechamento'].ewm(span=ema_lenta, adjust=False).mean()
     return df
+
+def reduzir_posicao(cripto, percentual):
+    try:
+        posicoes = cliente.get_positions(category="linear", symbol=cripto)['result']['list']
+        for pos in posicoes:
+            if float(pos['size']) > 0:
+                tamanho_atual = float(pos['size'])
+                quantidade_para_fechar = tamanho_atual * percentual
+                lado = 'Sell' if pos['side'] == 'Buy' else 'Buy'
+
+                cliente.place_order(
+                    category="linear",
+                    symbol=cripto,
+                    side=lado,
+                    order_type="Market",
+                    qty=round(quantidade_para_fechar, 3),
+                    reduce_only=True
+                )
+
+                print(f"Reduziu {percentual * 100}% da posição de {cripto} via mercado.")
+    except Exception as e:
+        print(f"Erro ao tentar reduzir posição: {e}")

@@ -145,9 +145,10 @@ def executar_backtest(df, ema_rapida, ema_lenta, risco_por_trade, risco_retorno,
         elif estado == EstadoDeTrade.DE_FORA and trade_count_today < max_trades_per_day:
             # ===== COMPRA AGRESSIVA =====
             if (
-                df['RSI'].iloc[i-1] < 30 and
+                df['RSI'].iloc[i-1] > 70 and
                 df['volume'].iloc[i] > df['Volume_EMA_20'].iloc[i] and
-                df['high'].iloc[i] > df['high'].iloc[i-1]
+                df['low'].iloc[i] < df['low'].iloc[i-1]
+                
             ):
                 preco_entrada = df['high'].iloc[i-1] * (1 + slippage_percent)
                 preco_stop = preco_entrada - (atr_atual * 2)
@@ -156,18 +157,7 @@ def executar_backtest(df, ema_rapida, ema_lenta, risco_por_trade, risco_retorno,
                 resultados.update_on_trade_open(ano, mes)
                 trade_count_today += 1
 
-            # ===== VENDA AGRESSIVA =====
-            elif (
-                df['RSI'].iloc[i-1] > 70 and
-                df['volume'].iloc[i] > df['Volume_EMA_20'].iloc[i] and
-                df['low'].iloc[i] < df['low'].iloc[i-1]
-            ):
-                preco_entrada = df['low'].iloc[i-1] * (1 - slippage_percent)
-                preco_stop = preco_entrada + (atr_atual * 2)
-                preco_alvo = preco_entrada - (preco_stop - preco_entrada) * risco_retorno
-                estado = EstadoDeTrade.VENDIDO
-                resultados.update_on_trade_open(ano, mes)
-                trade_count_today += 1
+           
 
     resultados.get_results()
     return saldo
