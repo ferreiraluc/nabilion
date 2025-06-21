@@ -107,12 +107,6 @@ while True:
 
             atr_atual = df['ATR'].iloc[-1]
 
-            # Filtro ATR Mínimo
-            if atr_atual < ATR_MINIMO:
-                print(f'ATR ({atr_atual}) abaixo do mínimo ({ATR_MINIMO}), pulando entrada.')
-                time.sleep(1)
-                continue
-
             # ======= COMPRA AGRESSIVA =======
             if (
                 df['RSI'].iloc[-2] < 30 and
