@@ -242,14 +242,11 @@ def abre_parcial_venda(cripto, quantidade_total, preco_entrada):
     except Exception as e:
         print(f'Erro ao configurar ordem parcial ou stop break even na venda: {e}', flush=True)
 
-def stop_breakeven_compra(cripto, preco_entrada, preco_parcial, estado_trade):
+def stop_breakeven_compra(cripto, preco_entrada, preco_parcial, estado_trade, preco_atual):
     try:
         if estado_trade == EstadoDeTrade.COMPRADO:
-            ticker = cliente.get_ticker(category="linear", symbol=cripto)
-            preco_atual = float(ticker['result']['list'][0]['lastPrice'])
-
             if preco_atual >= preco_parcial:
-                print(f'Preço já atingiu a parcial de 5%. Movendo stop para break even: {preco_entrada}', flush=True)
+                print(f'Preço atual {preco_atual} já atingiu a parcial de 5%. Movendo stop para break even: {preco_entrada}', flush=True)
                 cliente.set_trading_stop(
                     category="linear",
                     symbol=cripto,
@@ -261,14 +258,12 @@ def stop_breakeven_compra(cripto, preco_entrada, preco_parcial, estado_trade):
 
     return False
 
-def stop_breakeven_venda(cripto, preco_entrada, preco_parcial, estado_trade):
+
+def stop_breakeven_venda(cripto, preco_entrada, preco_parcial, estado_trade, preco_atual):
     try:
         if estado_trade == EstadoDeTrade.VENDIDO:
-            ticker = cliente.get_ticker(category="linear", symbol=cripto)
-            preco_atual = float(ticker['result']['list'][0]['lastPrice'])
-
             if preco_atual <= preco_parcial:
-                print(f'Preço já atingiu a parcial de +5%. Movendo stop para break even: {preco_entrada}', flush=True)
+                print(f'Preço atual {preco_atual} já atingiu a parcial de -5%. Movendo stop para break even: {preco_entrada}', flush=True)
                 cliente.set_trading_stop(
                     category="linear",
                     symbol=cripto,
