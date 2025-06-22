@@ -1,6 +1,6 @@
 from pybit.unified_trading import HTTP
 from estado_trade import EstadoDeTrade
-from funcoes_bybit import busca_velas, tem_trade_aberto, saldo_da_conta, quantidade_minima_para_operar, abre_compra, abre_venda, configurar_ordem_parcial_e_stop_break_even, configurar_ordem_parcial_e_stop_break_even_venda 
+from funcoes_bybit import busca_velas, tem_trade_aberto, saldo_da_conta, quantidade_minima_para_operar, abre_compra, abre_venda, abre_parcial_venda, abre_parcial_compra, stop_breakeven_compra, stop_breakeven_venda
 from utilidades import quantidade_cripto_para_operar
 import time
 from dotenv import load_dotenv
@@ -79,6 +79,9 @@ while True:
 
             _, _, preco_stop, preco_alvo = tem_trade_aberto(cripto)
 
+            preco_parcial_compra = preco_entrada * 1.05
+            stop_breakeven_compra(cripto, preco_entrada, preco_parcial_compra, estado_de_trade)
+
             if df['high'].iloc[-1] >= preco_alvo:
                 estado_de_trade = EstadoDeTrade.DE_FORA
                 vela_fechou_trade = df['open_time'].iloc[-1]
@@ -100,6 +103,9 @@ while True:
             print('Buscando saída no stop ou no alvo...')
 
             _, _, preco_stop, preco_alvo = tem_trade_aberto(cripto)
+
+            preco_parcial_venda = preco_entrada * 0.95
+            stop_breakeven_venda(cripto, preco_entrada, preco_parcial_venda, estado_de_trade)
 
             if df['low'].iloc[-1] <= preco_alvo:
                 estado_de_trade = EstadoDeTrade.DE_FORA
@@ -144,7 +150,7 @@ while True:
                     print(f"Entrou na compra AGRESSIVA da vela que abriu {df['open_time'].iloc[-1]}, Preço de entrada: {preco_entrada}, Stop: {preco_stop}, Alvo: {preco_alvo}")
                     estado_de_trade = EstadoDeTrade.COMPRADO
                     print('-' * 10)
-                    configurar_ordem_parcial_e_stop_break_even(cripto, qtd_cripto_para_operar, preco_entrada)
+                    abre_parcial_compra(cripto, qtd_cripto_para_operar, preco_entrada)
 
 
             # ======= VENDA AGRESSIVA =======
@@ -164,7 +170,7 @@ while True:
                     print(f"Entrou na venda AGRESSIVA da vela que abriu {df['open_time'].iloc[-1]}, Preço de entrada: {preco_entrada}, Stop: {preco_stop}, Alvo: {preco_alvo}")
                     estado_de_trade = EstadoDeTrade.VENDIDO
                     print('-' * 10)
-                    configurar_ordem_parcial_e_stop_break_even_venda(cripto, qtd_cripto_para_operar, preco_entrada)
+                    abre_parcial_venda(cripto, qtd_cripto_para_operar, preco_entrada)
 
 
     except ConnectionError as ce:
