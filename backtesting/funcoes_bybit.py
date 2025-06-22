@@ -191,3 +191,69 @@ def reduzir_posicao(cripto, percentual):
                 print(f"Reduziu {percentual * 100}% da posição de {cripto} via mercado.")
     except Exception as e:
         print(f"Erro ao tentar reduzir posição: {e}")
+
+
+def configurar_ordem_parcial_e_stop_break_even(cripto, quantidade_total, preco_entrada):
+    try:
+        # Calcular preço de 5% acima do preço de entrada
+        preco_parcial = preco_entrada * 1.05
+
+        # Calculando 50% da posição
+        quantidade_parcial = round(quantidade_total * 0.5, 3)  # Ajusta para 3 casas decimais por segurança
+
+        # Cria a ordem de Take Profit para os 50% da mão
+        print(f'Criando ordem de take profit para 50% da mão em {preco_parcial}', flush=True)
+        cliente.place_order(
+            category="linear",
+            symbol=cripto,
+            side="Sell",
+            orderType="Limit",
+            qty=quantidade_parcial,
+            price=round(preco_parcial, 4),
+            timeInForce="GTC",
+            reduceOnly=True
+        )
+
+        # Move o Stop Loss para o preço de entrada (Break Even)
+        print(f'Atualizando Stop Loss para o preço de entrada: {preco_entrada}', flush=True)
+        cliente.set_trading_stop(
+            category="linear",
+            symbol=cripto,
+            stopLoss=round(preco_entrada, 4)
+        )
+
+    except Exception as e:
+        print(f'Erro ao configurar ordem parcial ou stop break even: {e}', flush=True)
+
+
+def configurar_ordem_parcial_e_stop_break_even_venda(cripto, quantidade_total, preco_entrada):
+    try:
+        # Calcular preço 5% abaixo do preço de entrada
+        preco_parcial = preco_entrada * 0.95
+
+        # Calculando 50% da posição
+        quantidade_parcial = round(quantidade_total * 0.5, 3)  # Ajuste para 3 casas decimais
+
+        # Criar ordem de Take Profit para os 50% da mão
+        print(f'Criando ordem de take profit para 50% da mão em {preco_parcial}', flush=True)
+        cliente.place_order(
+            category="linear",
+            symbol=cripto,
+            side="Buy",  # Estamos vendidos, então a saída parcial é uma COMPRA
+            orderType="Limit",
+            qty=quantidade_parcial,
+            price=round(preco_parcial, 4),
+            timeInForce="GTC",
+            reduceOnly=True
+        )
+
+        # Mover o Stop Loss para o preço de entrada (Break Even)
+        print(f'Atualizando Stop Loss para o preço de entrada: {preco_entrada}', flush=True)
+        cliente.set_trading_stop(
+            category="linear",
+            symbol=cripto,
+            stopLoss=round(preco_entrada, 4)
+        )
+
+    except Exception as e:
+        print(f'Erro ao configurar ordem parcial ou stop break even na venda: {e}', flush=True)

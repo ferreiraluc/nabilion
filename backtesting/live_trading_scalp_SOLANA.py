@@ -1,6 +1,6 @@
 from pybit.unified_trading import HTTP
 from estado_trade import EstadoDeTrade
-from funcoes_bybit import busca_velas, tem_trade_aberto, saldo_da_conta, quantidade_minima_para_operar, abre_compra, abre_venda
+from funcoes_bybit import busca_velas, tem_trade_aberto, saldo_da_conta, quantidade_minima_para_operar, abre_compra, abre_venda, configurar_ordem_parcial_e_stop_break_even, configurar_ordem_parcial_e_stop_break_even_venda 
 from utilidades import quantidade_cripto_para_operar
 import time
 from dotenv import load_dotenv
@@ -65,7 +65,7 @@ while True:
             print('DataFrame vazio')
             continue
 
-        # ====== CALCULAR ATR ======
+            
         df = calcular_atr(df)
 
         if len(df) < qtd_velas_stop + 2:
@@ -133,7 +133,7 @@ while True:
                 df['high'].iloc[-1] > df['high'].iloc[-2]
             ):
                 preco_entrada = df['high'].iloc[-2]
-                preco_stop = preco_entrada - (atr_atual * 4)  # ======= STOP ATR 2x =======
+                preco_stop = preco_entrada - (atr_atual * 4)  
 
                 # Filtro anti-stop ultra curto
                 if (preco_entrada - preco_stop) < atr_atual:
@@ -144,6 +144,8 @@ while True:
                     print(f"Entrou na compra AGRESSIVA da vela que abriu {df['open_time'].iloc[-1]}, Preço de entrada: {preco_entrada}, Stop: {preco_stop}, Alvo: {preco_alvo}")
                     estado_de_trade = EstadoDeTrade.COMPRADO
                     print('-' * 10)
+                    configurar_ordem_parcial_e_stop_break_even(cripto, qtd_cripto_para_operar, preco_entrada)
+
 
             # ======= VENDA AGRESSIVA =======
             elif (
@@ -152,7 +154,7 @@ while True:
                 df['low'].iloc[-1] < df['low'].iloc[-2]
             ):
                 preco_entrada = df['low'].iloc[-2]
-                preco_stop = preco_entrada + (atr_atual * 4)  # ======= STOP ATR 2x =======
+                preco_stop = preco_entrada + (atr_atual * 4)   
 
                 if (preco_stop - preco_entrada) < atr_atual:
                     print("Stop de venda muito curto comparado ao ATR, ignorando entrada.")
@@ -162,6 +164,8 @@ while True:
                     print(f"Entrou na venda AGRESSIVA da vela que abriu {df['open_time'].iloc[-1]}, Preço de entrada: {preco_entrada}, Stop: {preco_stop}, Alvo: {preco_alvo}")
                     estado_de_trade = EstadoDeTrade.VENDIDO
                     print('-' * 10)
+                    configurar_ordem_parcial_e_stop_break_even_venda(cripto, qtd_cripto_para_operar, preco_entrada)
+
 
     except ConnectionError as ce:
         print(f'Erro de conexão: {ce}', flush=True)
