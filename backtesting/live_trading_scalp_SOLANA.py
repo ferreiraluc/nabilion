@@ -80,7 +80,7 @@ while True:
             _, _, preco_stop, preco_alvo = tem_trade_aberto(cripto)
 
             preco_atual = df['close'].iloc[-1]
-            preco_parcial_compra = preco_entrada * 1.05
+            preco_parcial_compra = preco_entrada * 1.005
             stop_breakeven_compra(cripto, preco_entrada, preco_parcial_compra, estado_de_trade, preco_atual)
 
             if df['high'].iloc[-1] >= preco_alvo:
@@ -106,7 +106,7 @@ while True:
             _, _, preco_stop, preco_alvo = tem_trade_aberto(cripto)
 
             preco_atual = df['close'].iloc[-1]
-            preco_parcial_venda = preco_entrada * 0.95
+            preco_parcial_venda = preco_entrada * 0.995
             stop_breakeven_venda(cripto, preco_entrada, preco_parcial_venda, estado_de_trade, preco_atual)
 
             if df['low'].iloc[-1] <= preco_alvo:
