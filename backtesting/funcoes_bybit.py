@@ -195,6 +195,9 @@ def reduzir_posicao(cripto, percentual):
 
 def abre_parcial_compra(cripto, quantidade_total, preco_entrada):
     try:
+        preco_entrada = float(preco_entrada)
+        quantidade_total = float(quantidade_total)
+        
         # Calcular preço de 5% acima do preço de entrada
         preco_parcial = preco_entrada * 1.05
 
@@ -220,6 +223,10 @@ def abre_parcial_compra(cripto, quantidade_total, preco_entrada):
 
 def abre_parcial_venda(cripto, quantidade_total, preco_entrada):
     try:
+
+        preco_entrada = float(preco_entrada)
+        quantidade_total = float(quantidade_total)
+        
         # Calcular preço 5% abaixo do preço de entrada
         preco_parcial = preco_entrada * 0.95
 
