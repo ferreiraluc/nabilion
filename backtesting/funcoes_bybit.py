@@ -199,7 +199,7 @@ def abre_parcial_compra(cripto, quantidade_total, preco_entrada):
         quantidade_total = float(quantidade_total)
         
         # Calcular preço de 5% acima do preço de entrada
-        preco_parcial = preco_entrada * 1.05
+        preco_parcial = preco_entrada * 1.005
 
         # Calculando 50% da posição
         quantidade_parcial = round(quantidade_total * 0.5, 3)  # Ajusta para 3 casas decimais por segurança
@@ -228,7 +228,7 @@ def abre_parcial_venda(cripto, quantidade_total, preco_entrada):
         quantidade_total = float(quantidade_total)
         
         # Calcular preço 5% abaixo do preço de entrada
-        preco_parcial = preco_entrada * 0.95
+        preco_parcial = preco_entrada * 0.995
 
         # Calculando 50% da posição
         quantidade_parcial = round(quantidade_total * 0.5, 3)  # Ajuste para 3 casas decimais
