@@ -1,6 +1,6 @@
 from pybit.unified_trading import HTTP
 from estado_trade import EstadoDeTrade
-from funcoes_bybit import busca_velas, tem_trade_aberto, saldo_da_conta, quantidade_minima_para_operar, abre_compra, abre_venda
+from funcoes_bybit import busca_velas, tem_trade_aberto, saldo_da_conta, quantidade_minima_para_operar, abre_compra, abre_venda, abre_parcial_venda, abre_parcial_compra, stop_breakeven_compra, stop_breakeven_venda
 from utilidades import quantidade_cripto_para_operar
 import time
 from dotenv import load_dotenv
@@ -15,7 +15,7 @@ SECRET_KEY = os.getenv('BYBIT_API_SECRET')
 cliente = HTTP(api_key=API_KEY, api_secret=SECRET_KEY)
 
 cripto = 'XRPUSDT'
-tempo_grafico = '5'
+tempo_grafico = '15'
 qtd_velas_stop = 17
 risco_retorno = 5.0
 emas = [9, 21]
@@ -65,7 +65,7 @@ while True:
             print('DataFrame vazio')
             continue
 
-        # ====== CALCULAR ATR ======
+            
         df = calcular_atr(df)
 
         if len(df) < qtd_velas_stop + 2:
@@ -78,6 +78,10 @@ while True:
             print('Buscando saída no stop ou no alvo...')
 
             _, _, preco_stop, preco_alvo = tem_trade_aberto(cripto)
+
+            preco_atual = df['close'].iloc[-1]
+            preco_parcial_compra = preco_entrada * 1.005
+            stop_breakeven_compra(cripto, preco_entrada, preco_parcial_compra, estado_de_trade, preco_atual)
 
             if df['high'].iloc[-1] >= preco_alvo:
                 estado_de_trade = EstadoDeTrade.DE_FORA
@@ -100,6 +104,10 @@ while True:
             print('Buscando saída no stop ou no alvo...')
 
             _, _, preco_stop, preco_alvo = tem_trade_aberto(cripto)
+
+            preco_atual = df['close'].iloc[-1]
+            preco_parcial_venda = preco_entrada * 0.995
+            stop_breakeven_venda(cripto, preco_entrada, preco_parcial_venda, estado_de_trade, preco_atual)
 
             if df['low'].iloc[-1] <= preco_alvo:
                 estado_de_trade = EstadoDeTrade.DE_FORA
@@ -133,7 +141,7 @@ while True:
                 df['high'].iloc[-1] > df['high'].iloc[-2]
             ):
                 preco_entrada = df['high'].iloc[-2]
-                preco_stop = preco_entrada - (atr_atual * 4)  # ======= STOP ATR 2x =======
+                preco_stop = preco_entrada - (atr_atual * 4)  
 
                 # Filtro anti-stop ultra curto
                 if (preco_entrada - preco_stop) < atr_atual:
@@ -144,6 +152,8 @@ while True:
                     print(f"Entrou na compra AGRESSIVA da vela que abriu {df['open_time'].iloc[-1]}, Preço de entrada: {preco_entrada}, Stop: {preco_stop}, Alvo: {preco_alvo}")
                     estado_de_trade = EstadoDeTrade.COMPRADO
                     print('-' * 10)
+                    abre_parcial_compra(cripto, qtd_cripto_para_operar, preco_entrada)
+
 
             # ======= VENDA AGRESSIVA =======
             elif (
@@ -152,7 +162,7 @@ while True:
                 df['low'].iloc[-1] < df['low'].iloc[-2]
             ):
                 preco_entrada = df['low'].iloc[-2]
-                preco_stop = preco_entrada + (atr_atual * 4)  # ======= STOP ATR 2x =======
+                preco_stop = preco_entrada + (atr_atual * 4)   
 
                 if (preco_stop - preco_entrada) < atr_atual:
                     print("Stop de venda muito curto comparado ao ATR, ignorando entrada.")
@@ -162,6 +172,8 @@ while True:
                     print(f"Entrou na venda AGRESSIVA da vela que abriu {df['open_time'].iloc[-1]}, Preço de entrada: {preco_entrada}, Stop: {preco_stop}, Alvo: {preco_alvo}")
                     estado_de_trade = EstadoDeTrade.VENDIDO
                     print('-' * 10)
+                    abre_parcial_venda(cripto, qtd_cripto_para_operar, preco_entrada)
+
 
     except ConnectionError as ce:
         print(f'Erro de conexão: {ce}', flush=True)
