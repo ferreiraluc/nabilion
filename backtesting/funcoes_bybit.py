@@ -203,7 +203,8 @@ def abre_parcial_compra(cripto, quantidade_total, preco_entrada):
 
         # Calculando 50% da posição
         quantidade_parcial = round(quantidade_total * 0.5, 3)  # Ajusta para 3 casas decimais por segurança
-
+        qtd_minima = quantidade_minima_para_operar(cripto)
+        quantidade_parcial = max(quantidade_parcial, qtd_minima)
         # Cria a ordem de Take Profit para os 50% da mão
         print(f'Criando ordem de take profit para 50% da mão em {preco_parcial}', flush=True)
         cliente.place_order(
@@ -232,7 +233,8 @@ def abre_parcial_venda(cripto, quantidade_total, preco_entrada):
 
         # Calculando 50% da posição
         quantidade_parcial = round(quantidade_total * 0.5, 3)  # Ajuste para 3 casas decimais
-
+        qtd_minima = quantidade_minima_para_operar(cripto)
+        quantidade_parcial = max(quantidade_parcial, qtd_minima)
         # Criar ordem de Take Profit para os 50% da mão
         print(f'Criando ordem de take profit para 50% da mão em {preco_parcial}', flush=True)
         cliente.place_order(
@@ -254,12 +256,17 @@ def stop_breakeven_compra(cripto, preco_entrada, preco_parcial, estado_trade, pr
         if estado_trade == EstadoDeTrade.COMPRADO:
             if preco_atual >= preco_parcial:
                 print(f'Preço atual {preco_atual} já atingiu a parcial de 5%. Movendo stop para break even: {preco_entrada}', flush=True)
-                cliente.set_trading_stop(
+                resposta = cliente.set_trading_stop(
                     category="linear",
                     symbol=cripto,
                     stopLoss=round(preco_entrada, 4)
                 )
-                return True
+                if resposta['retCode'] == 0:
+                    return True
+                elif resposta['retCode'] == 34040:
+                    print('Stop já estava no breakeven. Nada a modificar.', flush=True)
+                else:
+                    print(f'Erro ao mover stop: {resposta}', flush=True)
     except Exception as e:
         print(f'Erro ao verificar e subir stop para break even: {e}', flush=True)
 
@@ -271,12 +278,17 @@ def stop_breakeven_venda(cripto, preco_entrada, preco_parcial, estado_trade, pre
         if estado_trade == EstadoDeTrade.VENDIDO:
             if preco_atual <= preco_parcial:
                 print(f'Preço atual {preco_atual} já atingiu a parcial de -5%. Movendo stop para break even: {preco_entrada}', flush=True)
-                cliente.set_trading_stop(
+                resposta = cliente.set_trading_stop(
                     category="linear",
                     symbol=cripto,
                     stopLoss=round(preco_entrada, 4)
                 )
-                return True
+                if resposta['retCode'] == 0:
+                    return True
+                elif resposta['retCode'] == 34040:
+                    print('Stop já estava no breakeven. Nada a modificar.', flush=True)
+                else:
+                    print(f'Erro ao mover stop: {resposta}', flush=True)
     except Exception as e:
         print(f'Erro ao verificar e subir stop para break even na venda: {e}', flush=True)
 
