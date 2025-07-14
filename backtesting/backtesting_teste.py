@@ -145,19 +145,20 @@ def executar_backtest(df, ema_rapida, ema_lenta, risco_por_trade, risco_retorno,
         elif estado == EstadoDeTrade.DE_FORA and trade_count_today < max_trades_per_day:
             # ===== COMPRA AGRESSIVA =====
             if (
-                df['RSI'].iloc[i-1] > 70 and
+                df['RSI'].iloc[i - 1] < rsi_min and
                 df['volume'].iloc[i] > df['Volume_EMA_20'].iloc[i] and
-                df['low'].iloc[i] < df['low'].iloc[i-1]
-                
+                df['high'].iloc[i] > df['high'].iloc[i - 1] and
+                tendencia_alta
             ):
-                preco_entrada = df['high'].iloc[i-1] * (1 + slippage_percent)
+                preco_entrada = df['high'].iloc[i - 1] * (1 + slippage_percent)
                 preco_stop = preco_entrada - (atr_atual * 2)
                 preco_alvo = preco_entrada + (preco_entrada - preco_stop) * risco_retorno
-                estado = EstadoDeTrade.COMPRADO
-                resultados.update_on_trade_open(ano, mes)
-                trade_count_today += 1
 
-           
+                if (preco_entrada - preco_stop) >= atr_atual:
+                    print(f"Entrada COMPRA AGRESSIVA - Vela {df['open_time'].iloc[i]}: RSI={df['RSI'].iloc[i - 1]:.2f}, Volume={df['volume'].iloc[i]:.2f}, EMA9={df[f'EMA_{ema_rapida}'].iloc[i - 1]:.2f}")
+                    estado = EstadoDeTrade.COMPRADO
+                    resultados.update_on_trade_open(ano, mes)
+                    trade_count_today += 1
 
     resultados.get_results()
     return saldo

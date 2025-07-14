@@ -17,7 +17,7 @@ cliente = HTTP(api_key=API_KEY, api_secret=SECRET_KEY)
 cripto = 'XRPUSDT'
 tempo_grafico = '60'
 qtd_velas_stop = 17
-risco_retorno = 5.0
+risco_retorno = 3.1
 emas = [9, 21]
 ema_rapida = emas[0]
 ema_lenta = emas[1]
@@ -138,7 +138,8 @@ while True:
             if (
                 df['RSI'].iloc[-2] < 30 and
                 df['volume'].iloc[-1] > df['Volume_EMA_20'].iloc[-1] and
-                df['high'].iloc[-1] > df['high'].iloc[-2]
+                df['high'].iloc[-1] > df['high'].iloc[-2] and
+                df[f'EMA_{ema_rapida}'].iloc[-2] > df[f'EMA_{ema_lenta}'].iloc[-2] > df['EMA_200'].iloc[-2]
             ):
                 preco_entrada = df['high'].iloc[-2]
                 preco_stop = preco_entrada - (atr_atual * 4)  
@@ -159,7 +160,8 @@ while True:
             elif (
                 df['RSI'].iloc[-2] > 70 and
                 df['volume'].iloc[-1] > df['Volume_EMA_20'].iloc[-1] and
-                df['low'].iloc[-1] < df['low'].iloc[-2]
+                df['low'].iloc[-1] < df['low'].iloc[-2] and
+                df[f'EMA_{ema_rapida}'].iloc[-2] < df[f'EMA_{ema_lenta}'].iloc[-2] < df['EMA_200'].iloc[-2]
             ):
                 preco_entrada = df['low'].iloc[-2]
                 preco_stop = preco_entrada + (atr_atual * 4)   
