@@ -31,30 +31,33 @@ alavancagem = 2
 tf_principal = '15'  # Timeframe principal
 tf_confirmacao = '60'  # Timeframe de confirmação (1h)
 
-# Configurações de filtros para reversões
+# Configurações de filtros para reversões - OTIMIZADAS
 rsi_periodo = 14
 adx_periodo = 14
 volume_ma_periodo = 20
 
-# Thresholds para detecção de reversões
-rsi_oversold_reversao = 30  # RSI para compras em reversão
-rsi_overbought_reversao = 70  # RSI para vendas em reversão
+# Thresholds para detecção de reversões - MAIS PERMISSIVOS
+rsi_oversold_reversao = 45  # Muito mais permissivo (era 30)
+rsi_overbought_reversao = 55  # Muito mais permissivo (era 70)
 adx_forte = 25
-volume_threshold = 1.5  # Volume deve ser 1.5x maior que a média
+volume_threshold = 0.8  # MUITO permissivo: aceita volume 80% da média (era 1.5x)
 
-# Configurações do contador de velas para reversões
-min_velas_consecutivas = 4  # Mínimo de velas consecutivas
-max_velas_consecutivas = 10  # Máximo para evitar entradas tardias
+# Configurações do contador de velas para reversões - MAIS FLEXÍVEL
+min_velas_consecutivas = 2  # Reduzido para 2 velas (era 4)
+max_velas_consecutivas = 15  # Aumentado (era 10)
 
-# Configurações de Score System para reversões
-score_minimo_entrada = 6  # Mínimo para entrada
+# Configurações de Score System para reversões - MAIS PERMISSIVO
+score_minimo_entrada = 4  # Reduzido para 4 (era 6)
 score_maximo = 10  # Score máximo possível
 
-print('Bot Quantitativo de Reversões iniciado', flush=True)
+print('🔧 Bot Quantitativo de Reversões - OTIMIZADO', flush=True)
 print(f'Cripto: {cripto}', flush=True)
 print(f'Timeframe Principal: {tf_principal}', flush=True)
 print(f'Timeframe Confirmação: {tf_confirmacao}', flush=True)
 print(f'Score Mínimo para Entrada: {score_minimo_entrada}/{score_maximo}', flush=True)
+print(f'RSI Oversold: < {rsi_oversold_reversao}', flush=True)
+print(f'RSI Overbought: > {rsi_overbought_reversao}', flush=True)
+print(f'Volume Threshold: {volume_threshold}x', flush=True)
 print(f'Detecção de Reversões: {min_velas_consecutivas}-{max_velas_consecutivas} velas consecutivas', flush=True)
 
 # ===== INDICADORES QUANTITATIVOS PARA REVERSÕES =====
@@ -159,7 +162,7 @@ def calcular_indicadores_quantitativos(df):
         return df
 
 def sistema_score_reversoes(df_principal, df_confirmacao, velas_consecutivas, direcao='compra'):
-    """Sistema de pontuação quantitativa específico para reversões"""
+    """Sistema de pontuação quantitativa específico para reversões - OTIMIZADO"""
     score = 0
     detalhes_score = []
     
@@ -180,10 +183,14 @@ def sistema_score_reversoes(df_principal, df_confirmacao, velas_consecutivas, di
                 score += 3
                 detalhes_score.append(f"✓ RSI sobrevendido: {penultima_vela['RSI']:.1f}")
             
-            # 2. Volume acima da média (sua condição original) - 2 pontos
-            if ultima_vela['volume'] > ultima_vela['Volume_EMA_20'] * volume_threshold:
+            # 2. Volume (mais permissivo) - 2 pontos
+            volume_ratio = ultima_vela['volume'] / ultima_vela['Volume_EMA_20']
+            if volume_ratio > volume_threshold:
                 score += 2
-                detalhes_score.append("✓ Volume elevado confirma reversão")
+                detalhes_score.append(f"✓ Volume adequado: {volume_ratio:.2f}x")
+            elif volume_ratio > 0.5:
+                score += 1
+                detalhes_score.append(f"⚠️ Volume moderado: {volume_ratio:.2f}x")
             
             # 3. Rompimento da máxima anterior (sua condição original) - 2 pontos
             if ultima_vela['high'] > penultima_vela['high']:
@@ -208,10 +215,14 @@ def sistema_score_reversoes(df_principal, df_confirmacao, velas_consecutivas, di
                 score += 3
                 detalhes_score.append(f"✓ RSI sobrecomprado: {penultima_vela['RSI']:.1f}")
             
-            # 2. Volume acima da média (sua condição original) - 2 pontos
-            if ultima_vela['volume'] > ultima_vela['Volume_EMA_20'] * volume_threshold:
+            # 2. Volume (mais permissivo) - 2 pontos
+            volume_ratio = ultima_vela['volume'] / ultima_vela['Volume_EMA_20']
+            if volume_ratio > volume_threshold:
                 score += 2
-                detalhes_score.append("✓ Volume elevado confirma reversão")
+                detalhes_score.append(f"✓ Volume adequado: {volume_ratio:.2f}x")
+            elif volume_ratio > 0.5:
+                score += 1
+                detalhes_score.append(f"⚠️ Volume moderado: {volume_ratio:.2f}x")
             
             # 3. Rompimento da mínima anterior (sua condição original adaptada) - 2 pontos
             if ultima_vela['low'] < penultima_vela['low']:
@@ -279,9 +290,15 @@ def main():
     print(f'Estado inicial: {estado_de_trade}', flush=True)
     
     vela_fechou_trade = None
+    contador_analise = 0
     
     while True:
         try:
+            contador_analise += 1
+            print(f"\n{'='*60}")
+            print(f"🔄 ANÁLISE #{contador_analise} - {datetime.now().strftime('%H:%M:%S')}")
+            print(f"{'='*60}")
+            
             # Buscar dados multi-timeframe
             df_principal, df_confirmacao = buscar_dados_multi_timeframe(cripto, tf_principal, tf_confirmacao, emas)
             
@@ -298,6 +315,13 @@ def main():
                 print('Dados insuficientes. Aguardando...', flush=True)
                 time.sleep(30)
                 continue
+            
+            # Logs de debug para render
+            print(f"📊 RSI Atual: {df_principal['RSI'].iloc[-1]:.2f}")
+            print(f"📊 RSI Anterior: {df_principal['RSI'].iloc[-2]:.2f}")
+            print(f"📊 Volume Atual: {df_principal['volume'].iloc[-1]:.0f}")
+            print(f"📊 Volume EMA: {df_principal['Volume_EMA_20'].iloc[-1]:.0f}")
+            print(f"📊 Volume Ratio: {df_principal['volume'].iloc[-1]/df_principal['Volume_EMA_20'].iloc[-1]:.2f}x")
             
             # ===== GESTÃO DE POSIÇÕES ABERTAS =====
             if estado_de_trade == EstadoDeTrade.COMPRADO:
@@ -356,10 +380,12 @@ def main():
             
             # ===== BUSCA POR NOVAS ENTRADAS (REVERSÕES) =====
             elif estado_de_trade == EstadoDeTrade.DE_FORA and df_principal['open_time'].iloc[-1] != vela_fechou_trade:
-                print('Analisando reversões...', flush=True)
+                print('🔍 PROCURANDO REVERSÕES...', flush=True)
                 
                 # Contar velas consecutivas
                 velas_verdes, velas_vermelhas = contar_velas_consecutivas(df_principal)
+                print(f"📊 Velas Verdes Consecutivas: {velas_verdes}")
+                print(f"📊 Velas Vermelhas Consecutivas: {velas_vermelhas}")
                 
                 # Obter dados para cálculos
                 saldo = saldo_da_conta() * alavancagem
@@ -373,8 +399,10 @@ def main():
                 # ===== ANÁLISE PARA VENDA (TOPO APÓS VELAS VERDES) =====
                 score_venda, detalhes_venda = sistema_score_reversoes(df_principal, df_confirmacao, velas_verdes, 'venda')
                 
-                print(f'📊 Score Compra: {score_compra}/{score_maximo} (após {velas_vermelhas} velas vermelhas)', flush=True)
-                print(f'📊 Score Venda: {score_venda}/{score_maximo} (após {velas_verdes} velas verdes)', flush=True)
+                print(f"\n📊 RESULTADOS:")
+                print(f"   Score Compra: {score_compra}/{score_maximo}")
+                print(f"   Score Venda: {score_venda}/{score_maximo}")
+                print(f"   Score Mínimo: {score_minimo_entrada}")
                 
                 # ===== ENTRADA EM COMPRA (SUA ESTRATÉGIA ORIGINAL APRIMORADA) =====
                 if (score_compra >= score_minimo_entrada and 
@@ -399,9 +427,9 @@ def main():
                         estado_de_trade = EstadoDeTrade.COMPRADO
                         
                         print(f"\n🚀 COMPRA DE REVERSÃO EXECUTADA!", flush=True)
-                        print(f"📈 Preço Entrada: {preco_entrada:.2f}", flush=True)
-                        print(f"🛑 Stop Loss: {preco_stop:.2f}", flush=True)
-                        print(f"🎯 Take Profit: {preco_alvo:.2f}", flush=True)
+                        print(f"📈 Preço Entrada: {preco_entrada:.5f}", flush=True)
+                        print(f"🛑 Stop Loss: {preco_stop:.5f}", flush=True)
+                        print(f"🎯 Take Profit: {preco_alvo:.5f}", flush=True)
                         print(f"📊 Score Final: {score_compra}/{score_maximo}", flush=True)
                         print(f"🔴 Velas Vermelhas: {velas_vermelhas}", flush=True)
                         print("✅ Critérios atendidos:", flush=True)
@@ -438,9 +466,9 @@ def main():
                         estado_de_trade = EstadoDeTrade.VENDIDO
                         
                         print(f"\n🔻 VENDA DE REVERSÃO EXECUTADA!", flush=True)
-                        print(f"📉 Preço Entrada: {preco_entrada:.2f}", flush=True)
-                        print(f"🛑 Stop Loss: {preco_stop:.2f}", flush=True)
-                        print(f"🎯 Take Profit: {preco_alvo:.2f}", flush=True)
+                        print(f"📉 Preço Entrada: {preco_entrada:.5f}", flush=True)
+                        print(f"🛑 Stop Loss: {preco_stop:.5f}", flush=True)
+                        print(f"🎯 Take Profit: {preco_alvo:.5f}", flush=True)
                         print(f"📊 Score Final: {score_venda}/{score_maximo}", flush=True)
                         print(f"🟢 Velas Verdes: {velas_verdes}", flush=True)
                         print("✅ Critérios atendidos:", flush=True)
@@ -455,13 +483,23 @@ def main():
                         print(f'Erro ao executar venda: {e}', flush=True)
                 
                 else:
-                    print(f"❌ Critérios de reversão não atendidos (score mín: {score_minimo_entrada})", flush=True)
+                    print(f"❌ Critérios de reversão não atendidos", flush=True)
+                    print(f"   Score compra: {score_compra} | Score venda: {score_venda}", flush=True)
                     print(f"   Velas verdes: {velas_verdes} | Velas vermelhas: {velas_vermelhas}", flush=True)
+                    if score_compra > 0:
+                        print("✅ Critérios compra atendidos:", flush=True)
+                        for detalhe in detalhes_compra:
+                            print(f"   {detalhe}", flush=True)
+                    if score_venda > 0:
+                        print("✅ Critérios venda atendidos:", flush=True)
+                        for detalhe in detalhes_venda:
+                            print(f"   {detalhe}", flush=True)
         
         except Exception as e:
             print(f'Erro no loop principal: {e}', flush=True)
         
         # Aguardar próxima análise
+        print(f"\n⏰ Próxima análise em 15 segundos...")
         time.sleep(15)  # Análise a cada 15 segundos
 
 if __name__ == "__main__":
