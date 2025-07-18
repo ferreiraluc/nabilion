@@ -17,8 +17,8 @@ SECRET_KEY = os.getenv('BYBIT_API_SECRET')
 cliente = HTTP(api_key=API_KEY, api_secret=SECRET_KEY)
 
 # ===== CONFIGURAÇÕES APRIMORADAS =====
-cripto = 'CUDISUSDT'
-tempo_grafico = '60'
+cripto = 'XRPUSDT'
+tempo_grafico = '15'
 qtd_velas_stop = 17
 risco_retorno = 3.1
 emas = [9, 21]
@@ -28,8 +28,8 @@ alavancagem = 2
 
 # ===== NOVOS PARÂMETROS QUANTITATIVOS =====
 # Períodos para análise multi-timeframe
-tf_principal = '60'  # Timeframe principal
-tf_confirmacao = '240'  # Timeframe de confirmação (4h)
+tf_principal = '15'  # Timeframe principal
+tf_confirmacao = '60'  # Timeframe de confirmação (1h)
 
 # Configurações de filtros
 rsi_periodo = 14
