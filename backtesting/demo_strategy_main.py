@@ -33,7 +33,6 @@ if not API_KEY or not SECRET_KEY:
 # Cliente demo
 cliente = HTTP(
     testnet=True,
-    demo=True,  # CRUCIAL para demo
     api_key=API_KEY,
     api_secret=SECRET_KEY,
     log_requests=True
