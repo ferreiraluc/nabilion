@@ -26,9 +26,9 @@ load_dotenv()
 API_KEY = os.getenv('BYBIT_DEMO_KEY')
 SECRET_KEY = os.getenv('BYBIT_DEMO_SECRET')
 
-# ===== CONFIGURAÇÕES DEMO =====
-API_KEY = 'SeUc1u24GRjUGKLZZD'
-SECRET_KEY = 'W16YRanzkID6q3HtzmftdjOwtwphgIigsBAh'
+if not API_KEY or not SECRET_KEY:
+    logging.error("🔑 Chaves de API não encontradas! Verifique seu arquivo .env.")
+    raise ValueError("Chaves de API não configuradas corretamente.")
 
 # Cliente demo
 cliente = HTTP(
