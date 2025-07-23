@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nabilion - Sistema de Trading Automatizado</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <!-- Hero Section -->
+            <section class="hero fade-in">
+                <h1><i class="fas fa-robot"></i> Nabilion</h1>
+                <p>Sistema Avançado de Trading Automatizado para Criptomoedas com IA e Análise Técnica Profissional</p>
+                <div class="tech-items" style="margin-top: 20px;">
+                    <span class="tech-item"><i class="fab fa-python"></i> Python</span>
+                    <span class="tech-item"><i class="fas fa-chart-line"></i> Bybit API</span>
+                    <span class="tech-item"><i class="fas fa-brain"></i> Machine Learning</span>
+                    <span class="tech-item"><i class="fas fa-cogs"></i> Fast Config Trading</span>
+                </div>
+            </section>
+
+            <!-- Stats Overview -->
+            <section class="stats-grid">
+                <div class="stat-card fade-in">
+                    <div class="stat-icon"><i class="fas fa-robot"></i></div>
+                    <div class="stat-value">{{ totalBots }}</div>
+                    <div class="stat-label">Bots Ativos</div>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                    <div class="stat-value">{{ supportedPairs }}</div>
+                    <div class="stat-label">Pares Suportados</div>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="stat-icon"><i class="fas fa-chart-bar"></i></div>
+                    <div class="stat-value">{{ backtestingAccuracy }}%</div>
+                    <div class="stat-label">Precisão Backtesting</div>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="stat-icon"><i class="fas fa-shield-alt"></i></div>
+                    <div class="stat-value">{{ riskManagement }}:1</div>
+                    <div class="stat-label">Risco/Retorno</div>
+                </div>
+            </section>
+
+            <!-- Trading Bots Section -->
+            <section class="features-section">
+                <h2 class="section-title"><i class="fas fa-robot"></i> Bots de Trading</h2>
+                <div class="trading-bots">
+                    <div v-for="bot in tradingBots" :key="bot.id" class="bot-card fade-in">
+                        <div :class="['bot-status', bot.status === 'online' ? '' : 'offline']">
+                            <i :class="bot.status === 'online' ? 'fas fa-circle pulse' : 'fas fa-circle'"></i>
+                            {{ bot.status === 'online' ? 'Ativo' : 'Inativo' }}
+                        </div>
+                        <div class="bot-name">{{ bot.name }}</div>
+                        <div class="bot-symbol">{{ bot.symbol }}</div>
+                        <div class="bot-metrics">
+                            <div class="bot-metric">
+                                <span>Timeframe:</span>
+                                <span>{{ bot.timeframe }}</span>
+                            </div>
+                            <div class="bot-metric">
+                                <span>Alavancagem:</span>
+                                <span>{{ bot.leverage }}x</span>
+                            </div>
+                            <div class="bot-metric">
+                                <span>EMA Rápida:</span>
+                                <span>{{ bot.ema_fast }}</span>
+                            </div>
+                            <div class="bot-metric">
+                                <span>EMA Lenta:</span>
+                                <span>{{ bot.ema_slow }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Features Section -->
+            <section class="features-section">
+                <h2 class="section-title"><i class="fas fa-star"></i> Principais Funcionalidades</h2>
+                <div class="features-grid">
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="feature-title">Trading Automatizado</div>
+                        <div class="feature-description">
+                            Execução automática de trades baseada em análise técnica avançada com EMAs (9,21), RSI e padrões de candlestick.
+                        </div>
+                    </div>
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon"><i class="fas fa-history"></i></div>
+                        <div class="feature-title">Backtesting Avançado</div>
+                        <div class="feature-description">
+                            Sistema completo de backtesting com dados históricos, permitindo validação de estratégias antes da execução ao vivo.
+                        </div>
+                    </div>
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon"><i class="fas fa-brain"></i></div>
+                        <div class="feature-title">Machine Learning</div>
+                        <div class="feature-description">
+                            Integração com ML para análise preditiva de mercado e otimização contínua das estratégias de trading.
+                        </div>
+                    </div>
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                        <div class="feature-title">Gestão de Risco</div>
+                        <div class="feature-description">
+                            Stop loss baseado em ATR, gestão de posição automatizada e controle rigoroso de risco por operação.
+                        </div>
+                    </div>
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon"><i class="fas fa-cogs"></i></div>
+                        <div class="feature-title">Multi-Par Trading</div>
+                        <div class="feature-description">
+                            Suporte para múltiplos pares de criptomoedas: BTC, ETH, XRP, PEPE, SOL e muitos outros.
+                        </div>
+                    </div>
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon"><i class="fas fa-email"></i></div>
+                        <div class="feature-title">Relatórios Automatizados</div>
+                        <div class="feature-description">
+                            Dashboard com análise de mercado e relatórios enviados automaticamente por email a cada 6 horas.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Technical Analysis Section -->
+            <section class="features-section">
+                <h2 class="section-title"><i class="fas fa-chart-area"></i> Análise Técnica</h2>
+                <div class="features-grid">
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon"><i class="fas fa-wave-square"></i></div>
+                        <div class="feature-title">Indicadores Técnicos</div>
+                        <div class="feature-description">
+                            <strong>RSI:</strong> Índice de força relativa para identificar condições de sobrecompra/sobrevenda<br>
+                            <strong>EMAs:</strong> Médias móveis exponenciais (9 e 21) para análise de tendência<br>
+                            <strong>ATR:</strong> Average True Range para cálculo dinâmico de stop loss
+                        </div>
+                    </div>
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon"><i class="fas fa-candle-holder"></i></div>
+                        <div class="feature-title">Padrões de Candlestick</div>
+                        <div class="feature-description">
+                            <strong>Engolfo de Alta:</strong> Padrão de reversão bullish<br>
+                            <strong>Engolfo de Baixa:</strong> Padrão de reversão bearish<br>
+                            <strong>Piercing Line:</strong> Confirmação de reversão de tendência
+                        </div>
+                    </div>
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon"><i class="fas fa-calculator"></i></div>
+                        <div class="feature-title">Estratégia Larry Williams</div>
+                        <div class="feature-description">
+                            Implementação da técnica 9.1 de Larry Williams combinada com EMAs para trades estruturados com alta probabilidade de sucesso.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Risk Management -->
+            <section class="features-section">
+                <h2 class="section-title"><i class="fas fa-shield-alt"></i> Gestão de Risco</h2>
+                <div class="risk-management">
+                    <div class="risk-card fade-in">
+                        <div class="risk-value">1%</div>
+                        <div class="stat-label">Risco por Trade</div>
+                    </div>
+                    <div class="risk-card fade-in">
+                        <div class="risk-value">2-5:1</div>
+                        <div class="stat-label">Risco/Retorno</div>
+                    </div>
+                    <div class="risk-card fade-in">
+                        <div class="risk-value">ATR</div>
+                        <div class="stat-label">Stop Loss Dinâmico</div>
+                    </div>
+                    <div class="risk-card fade-in">
+                        <div class="risk-value">Auto</div>
+                        <div class="stat-label">Breakeven</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tech Stack -->
+            <section class="tech-stack fade-in">
+                <h2 class="section-title"><i class="fas fa-code"></i> Stack Tecnológico</h2>
+                <div class="tech-items">
+                    <span class="tech-item"><i class="fab fa-python"></i> Python 3.x</span>
+                    <span class="tech-item"><i class="fas fa-database"></i> Pandas & NumPy</span>
+                    <span class="tech-item"><i class="fas fa-chart-line"></i> Pybit (Bybit API)</span>
+                    <span class="tech-item"><i class="fas fa-envelope"></i> SMTP (Email Reports)</span>
+                    <span class="tech-item"><i class="fas fa-file-pdf"></i> ReportLab (PDF)</span>
+                    <span class="tech-item"><i class="fas fa-palette"></i> Matplotlib & Seaborn</span>
+                    <span class="tech-item"><i class="fas fa-clock"></i> Schedule (Automation)</span>
+                    <span class="tech-item"><i class="fas fa-key"></i> Python-dotenv</span>
+                    <span class="tech-item"><i class="fas fa-brain"></i> Machine Learning</span>
+                </div>
+            </section>
+
+            <!-- Performance Chart -->
+            <section class="performance-chart fade-in">
+                <h2 class="section-title"><i class="fas fa-chart-bar"></i> Performance do Sistema</h2>
+                <div class="tabs">
+                    <button 
+                        v-for="tab in chartTabs" 
+                        :key="tab.id"
+                        :class="['tab', { active: activeTab === tab.id }]"
+                        @click="activeTab = tab.id"
+                    >
+                        <i :class="tab.icon"></i> {{ tab.label }}
+                    </button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <p><i class="fas fa-code"></i> Desenvolvido Por Ferreiralux | <i class="fas fa-shield-alt"></i> Sistema de Trading Profissional</p>
+                <p style="margin-top: 10px; opacity: 0.7;">
+                    <i class="fas fa-robot"></i> Nabilion Fund | IA + Quantum Trading
+                </p>
+            </footer>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
