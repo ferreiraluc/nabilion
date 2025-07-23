@@ -27,6 +27,12 @@ from email.mime.application import MIMEApplication
 import io
 import base64
 from jinja2 import Template
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -271,242 +277,41 @@ class CryptoMarketAnalyzer:
         logging.info(f"Gráfico criado para {symbol}: {filename}")
         return filename
 
-    def generate_html_report(self, market_data: Dict, chart_files: List[str]) -> str:
-        """Gera relatório HTML completo"""
+    def generate_pdf_report(self, market_data: Dict, chart_files: List[str]) -> str:
+        """Gera relatório PDF completo"""
         
-        template_str = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Dashboard Cripto - {{current_time}}</title>
-            <style>
-                body {
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                    background: linear-gradient(135deg, #1e3c72, #2a5298);
-                    color: white;
-                    margin: 0;
-                    padding: 20px;
-                    line-height: 1.6;
-                }
-                .container {
-                    max-width: 1200px;
-                    margin: 0 auto;
-                    background: rgba(0, 0, 0, 0.8);
-                    border-radius: 15px;
-                    padding: 30px;
-                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-                }
-                h1 {
-                    text-align: center;
-                    color: #4ecdc4;
-                    font-size: 2.5em;
-                    margin-bottom: 10px;
-                    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-                }
-                .subtitle {
-                    text-align: center;
-                    color: #a0a0a0;
-                    font-size: 1.2em;
-                    margin-bottom: 40px;
-                }
-                .section {
-                    margin-bottom: 40px;
-                    background: rgba(255, 255, 255, 0.05);
-                    border-radius: 10px;
-                    padding: 25px;
-                    backdrop-filter: blur(10px);
-                }
-                .section h2 {
-                    color: #4ecdc4;
-                    border-bottom: 2px solid #4ecdc4;
-                    padding-bottom: 10px;
-                    margin-bottom: 20px;
-                    font-size: 1.8em;
-                }
-                .crypto-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                    gap: 20px;
-                    margin-bottom: 30px;
-                }
-                .crypto-card {
-                    background: rgba(255, 255, 255, 0.1);
-                    border-radius: 10px;
-                    padding: 20px;
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                    transition: transform 0.3s ease;
-                }
-                .crypto-card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-                }
-                .crypto-symbol {
-                    font-weight: bold;
-                    font-size: 1.3em;
-                    color: #4ecdc4;
-                    margin-bottom: 10px;
-                }
-                .crypto-price {
-                    font-size: 1.5em;
-                    font-weight: bold;
-                    margin-bottom: 10px;
-                }
-                .crypto-change {
-                    font-size: 1.2em;
-                    font-weight: bold;
-                    padding: 8px 15px;
-                    border-radius: 20px;
-                    display: inline-block;
-                }
-                .positive { background: #00ff88; color: #000; }
-                .negative { background: #ff4444; color: #fff; }
-                .volume-info {
-                    margin-top: 10px;
-                    color: #a0a0a0;
-                    font-size: 0.9em;
-                }
-                .chart-container {
-                    text-align: center;
-                    margin: 30px 0;
-                }
-                .chart-title {
-                    font-size: 1.4em;
-                    color: #4ecdc4;
-                    margin-bottom: 15px;
-                    font-weight: bold;
-                }
-                .summary-stats {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 20px;
-                    margin-bottom: 30px;
-                }
-                .stat-card {
-                    background: linear-gradient(135deg, #667eea, #764ba2);
-                    border-radius: 10px;
-                    padding: 20px;
-                    text-align: center;
-                }
-                .stat-value {
-                    font-size: 2em;
-                    font-weight: bold;
-                    color: white;
-                }
-                .stat-label {
-                    color: #e0e0e0;
-                    margin-top: 5px;
-                    font-size: 0.9em;
-                }
-                .footer {
-                    text-align: center;
-                    margin-top: 40px;
-                    padding-top: 20px;
-                    border-top: 1px solid rgba(255, 255, 255, 0.2);
-                    color: #a0a0a0;
-                }
-                @media (max-width: 768px) {
-                    .crypto-grid { grid-template-columns: 1fr; }
-                    .summary-stats { grid-template-columns: 1fr; }
-                    h1 { font-size: 2em; }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>🚀 Dashboard Cripto</h1>
-                <div class="subtitle">Análise de Mercado - {{current_time}}</div>
-                
-                <!-- Estatísticas Resumo -->
-                <div class="summary-stats">
-                    <div class="stat-card">
-                        <div class="stat-value">{{total_volume}}</div>
-                        <div class="stat-label">Volume Total 24h</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">{{avg_change}}</div>
-                        <div class="stat-label">Variação Média Top 10</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">{{market_sentiment}}</div>
-                        <div class="stat-label">Sentimento do Mercado</div>
-                    </div>
-                </div>
-
-                <!-- Top 10 Altas -->
-                <div class="section">
-                    <h2>📈 Top 10 Maiores Altas (24h)</h2>
-                    <div class="crypto-grid">
-                        {% for crypto in gainers %}
-                        <div class="crypto-card">
-                            <div class="crypto-symbol">{{crypto.symbol}}</div>
-                            <div class="crypto-price">${{crypto.price}}</div>
-                            <div class="crypto-change positive">+{{crypto.change_24h}}%</div>
-                            <div class="volume-info">
-                                Volume: ${{crypto.volume_usdt_24h_formatted}}
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <!-- Top 10 Baixas -->
-                <div class="section">
-                    <h2>📉 Top 10 Maiores Baixas (24h)</h2>
-                    <div class="crypto-grid">
-                        {% for crypto in losers %}
-                        <div class="crypto-card">
-                            <div class="crypto-symbol">{{crypto.symbol}}</div>
-                            <div class="crypto-price">${{crypto.price}}</div>
-                            <div class="crypto-change negative">{{crypto.change_24h}}%</div>
-                            <div class="volume-info">
-                                Volume: ${{crypto.volume_usdt_24h_formatted}}
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <!-- Top 10 Volume -->
-                <div class="section">
-                    <h2>💎 Top 10 Maior Volume (24h)</h2>
-                    <div class="crypto-grid">
-                        {% for crypto in volume %}
-                        <div class="crypto-card">
-                            <div class="crypto-symbol">{{crypto.symbol}}</div>
-                            <div class="crypto-price">${{crypto.price}}</div>
-                            <div class="crypto-change {% if crypto.change_24h_num >= 0 %}positive{% else %}negative{% endif %}">
-                                {{crypto.change_24h}}
-                            </div>
-                            <div class="volume-info">
-                                Volume: ${{crypto.volume_usdt_24h_formatted}}
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <!-- Gráficos de Resistência -->
-                <div class="section">
-                    <h2>📊 Análise Técnica - Top 3 Volume</h2>
-                    {% for chart in charts %}
-                    <div class="chart-container">
-                        <div class="chart-title">{{chart.symbol}} - Suporte e Resistência</div>
-                        <img src="cid:{{chart.cid}}" style="max-width: 100%; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);" />
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <div class="footer">
-                    <p>Dashboard gerado automaticamente • Dados via Bybit API</p>
-                    <p>Próximo relatório: {{next_report}}</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
+        # Criar documento PDF
+        current_time = datetime.now().strftime('%Y%m%d_%H%M')
+        pdf_filename = f"reports/crypto_report_{current_time}.pdf"
         
-        # Preparar dados para o template
+        doc = SimpleDocTemplate(pdf_filename, pagesize=A4)
+        story = []
+        styles = getSampleStyleSheet()
+        
+        # Estilos personalizados
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=24,
+            spaceAfter=30,
+            alignment=TA_CENTER,
+            textColor=colors.HexColor('#2a5298')
+        )
+        
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=16,
+            spaceAfter=12,
+            textColor=colors.HexColor('#4ecdc4')
+        )
+        
+        # Título
+        story.append(Paragraph("🚀 Dashboard Cripto", title_style))
+        story.append(Paragraph(f"Análise de Mercado - {datetime.now().strftime('%d/%m/%Y às %H:%M')}", styles['Normal']))
+        story.append(Spacer(1, 20))
+        
+        # Funções auxiliares
         def format_volume(volume):
             if volume >= 1e9:
                 return f"{volume/1e9:.2f}B"
@@ -524,64 +329,169 @@ class CryptoMarketAnalyzer:
             else:
                 return f"{price:.8f}"
 
-        # Calcular estatísticas ANTES de formatar (para evitar conversão de tipos)
+        # Calcular estatísticas
         total_volume = sum([c['volume_usdt_24h'] for c in market_data['volume']])
         avg_change = np.mean([c['change_24h'] for c in market_data['gainers']])
-        
         positive_count = len([c for c in market_data['gainers'] if c['change_24h'] > 0])
         sentiment = "🟢 Otimista" if positive_count >= 7 else "🔴 Pessimista" if positive_count <= 3 else "🟡 Neutro"
 
-        # Formatar dados APÓS calcular estatísticas
-        for category in ['gainers', 'losers', 'volume']:
-            for crypto in market_data[category]:
-                # Manter valor numérico para comparações no template
-                crypto['change_24h_num'] = crypto['change_24h']
-                crypto['price'] = format_price(crypto['price'])
-                crypto['change_24h'] = f"{crypto['change_24h']:+.2f}%"
-                crypto['volume_usdt_24h_formatted'] = format_volume(crypto['volume_usdt_24h'])
-
-        # Preparar dados dos gráficos
-        charts_data = []
-        for i, chart_file in enumerate(chart_files):
-            symbol = os.path.basename(chart_file).replace('_chart.png', '')
-            charts_data.append({
-                'symbol': symbol,
-                'cid': f'chart_{i}'
-            })
-
-        template = Template(template_str)
-        html_content = template.render(
-            current_time=datetime.now().strftime('%d/%m/%Y às %H:%M'),
-            next_report=(datetime.now() + timedelta(hours=6)).strftime('%d/%m/%Y às %H:%M'),
-            total_volume=format_volume(total_volume),
-            avg_change=f"{avg_change:+.2f}%",
-            market_sentiment=sentiment,
-            gainers=market_data['gainers'],
-            losers=market_data['losers'],
-            volume=market_data['volume'],
-            charts=charts_data
-        )
+        # Estatísticas resumo
+        stats_data = [
+            ['Volume Total 24h', format_volume(total_volume)],
+            ['Variação Média Top 10', f"{avg_change:+.2f}%"],
+            ['Sentimento do Mercado', sentiment]
+        ]
         
-        return html_content
+        stats_table = Table(stats_data, colWidths=[3*inch, 2*inch])
+        stats_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f0f8ff')),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        story.append(stats_table)
+        story.append(Spacer(1, 30))
+        
+        # Top 10 Maiores Altas
+        story.append(Paragraph("📈 Top 10 Maiores Altas (24h)", heading_style))
+        gainers_data = [['Símbolo', 'Preço', 'Variação 24h', 'Volume']]
+        for crypto in market_data['gainers']:
+            gainers_data.append([
+                crypto['symbol'],
+                f"${format_price(crypto['price'])}",
+                f"{crypto['change_24h']:+.2f}%",
+                format_volume(crypto['volume_usdt_24h'])
+            ])
+        
+        gainers_table = Table(gainers_data, colWidths=[1.5*inch, 1.5*inch, 1.5*inch, 1.5*inch])
+        gainers_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4ecdc4')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        story.append(gainers_table)
+        story.append(Spacer(1, 20))
+        
+        # Top 10 Maiores Baixas
+        story.append(Paragraph("📉 Top 10 Maiores Baixas (24h)", heading_style))
+        losers_data = [['Símbolo', 'Preço', 'Variação 24h', 'Volume']]
+        for crypto in market_data['losers']:
+            losers_data.append([
+                crypto['symbol'],
+                f"${format_price(crypto['price'])}",
+                f"{crypto['change_24h']:+.2f}%",
+                format_volume(crypto['volume_usdt_24h'])
+            ])
+        
+        losers_table = Table(losers_data, colWidths=[1.5*inch, 1.5*inch, 1.5*inch, 1.5*inch])
+        losers_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#ff6b6b')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        story.append(losers_table)
+        story.append(PageBreak())
+        
+        # Top 10 Volume
+        story.append(Paragraph("💎 Top 10 Maior Volume (24h)", heading_style))
+        volume_data = [['Símbolo', 'Preço', 'Variação 24h', 'Volume']]
+        for crypto in market_data['volume']:
+            volume_data.append([
+                crypto['symbol'],
+                f"${format_price(crypto['price'])}",
+                f"{crypto['change_24h']:+.2f}%",
+                format_volume(crypto['volume_usdt_24h'])
+            ])
+        
+        volume_table = Table(volume_data, colWidths=[1.5*inch, 1.5*inch, 1.5*inch, 1.5*inch])
+        volume_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#9b59b6')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        story.append(volume_table)
+        story.append(Spacer(1, 30))
+        
+        # Gráficos
+        story.append(Paragraph("📊 Análise Técnica - Top 3 Volume", heading_style))
+        
+        for chart_file in chart_files:
+            if os.path.exists(chart_file):
+                symbol = os.path.basename(chart_file).replace('_chart.png', '')
+                story.append(Paragraph(f"{symbol} - Suporte e Resistência", styles['Normal']))
+                story.append(Spacer(1, 10))
+                
+                img = Image(chart_file, width=6*inch, height=4*inch)
+                story.append(img)
+                story.append(Spacer(1, 20))
+        
+        # Rodapé
+        story.append(Spacer(1, 30))
+        story.append(Paragraph("Dashboard gerado automaticamente • Dados via Bybit API", styles['Normal']))
+        story.append(Paragraph(f"Próximo relatório: {(datetime.now() + timedelta(hours=6)).strftime('%d/%m/%Y às %H:%M')}", styles['Normal']))
+        
+        # Construir PDF
+        doc.build(story)
+        
+        return pdf_filename
 
-    def send_email_report(self, html_content: str, chart_files: List[str]) -> bool:
-        """Envia relatório por email"""
+    def send_email_report(self, pdf_file: str) -> bool:
+        """Envia relatório PDF por email"""
         try:
-            msg = MIMEMultipart('related')
+            msg = MIMEMultipart()
             msg['From'] = self.email_sender
             msg['To'] = self.email_receiver
             msg['Subject'] = f"🚀 Dashboard Cripto - {datetime.now().strftime('%d/%m/%Y %H:%M')}"
 
-            # Anexar HTML
-            msg.attach(MIMEText(html_content, 'html'))
+            # Corpo do email simples
+            body = f"""
+            Olá!
+            
+            Segue em anexo o relatório de análise do mercado cripto de {datetime.now().strftime('%d/%m/%Y às %H:%M')}.
+            
+            O relatório contém:
+            • Top 10 maiores altas das últimas 24h
+            • Top 10 maiores baixas das últimas 24h  
+            • Top 10 moedas por volume de negociação
+            • Análise técnica com gráficos de suporte e resistência
+            
+            Próximo relatório será enviado em 6 horas.
+            
+            Atenciosamente,
+            Sistema Automatizado Nabilion
+            """
+            
+            msg.attach(MIMEText(body, 'plain'))
 
-            # Anexar gráficos
-            for i, chart_file in enumerate(chart_files):
-                if os.path.exists(chart_file):
-                    with open(chart_file, 'rb') as f:
-                        img = MIMEImage(f.read())
-                        img.add_header('Content-ID', f'<chart_{i}>')
-                        msg.attach(img)
+            # Anexar PDF
+            if os.path.exists(pdf_file):
+                with open(pdf_file, 'rb') as f:
+                    pdf_attachment = MIMEApplication(f.read(), _subtype='pdf')
+                    pdf_attachment.add_header('Content-Disposition', 'attachment', 
+                                           filename=os.path.basename(pdf_file))
+                    msg.attach(pdf_attachment)
 
             # Enviar email
             with smtplib.SMTP('smtp.gmail.com', 587) as server:
@@ -589,7 +499,7 @@ class CryptoMarketAnalyzer:
                 server.login(self.email_sender, self.email_password)
                 server.send_message(msg)
 
-            logging.info("Relatório enviado por email com sucesso")
+            logging.info("Relatório PDF enviado por email com sucesso")
             return True
 
         except Exception as e:
@@ -635,19 +545,14 @@ class CryptoMarketAnalyzer:
                 # Pequena pausa entre requisições
                 time.sleep(1)
 
-            # 4. Gerar HTML
-            logging.info("Gerando relatório HTML...")
-            html_content = self.generate_html_report(top_movers, chart_files)
+            # 4. Gerar PDF
+            logging.info("Gerando relatório PDF...")
+            pdf_filename = self.generate_pdf_report(top_movers, chart_files)
+            logging.info(f"Relatório PDF salvo: {pdf_filename}")
             
-            # 5. Salvar relatório local
-            report_filename = f"reports/crypto_report_{datetime.now().strftime('%Y%m%d_%H%M')}.html"
-            with open(report_filename, 'w', encoding='utf-8') as f:
-                f.write(html_content)
-            logging.info(f"Relatório salvo localmente: {report_filename}")
-            
-            # 6. Enviar por email
-            logging.info("Enviando relatório por email...")
-            success = self.send_email_report(html_content, chart_files)
+            # 5. Enviar por email
+            logging.info("Enviando relatório PDF por email...")
+            success = self.send_email_report(pdf_filename)
             
             if success:
                 logging.info("Relatório completo gerado e enviado com sucesso!")
