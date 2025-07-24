@@ -362,6 +362,32 @@ body {
                 linear-gradient(45deg, #ffd700, #daa520) border-box;
 }
 
+.nabilion-logo {
+    width: 100px;
+    height: 100px;
+    margin-right: -40px;
+    margin-bottom: 10px;
+    vertical-align: middle;
+    animation: float 3s ease-in-out infinite, rotate 8s linear infinite;
+    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.5));
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+}
+
+@keyframes rotate {
+    0% { transform: rotateZ(0deg); }
+    100% { transform: rotateZ(360deg); }
+}
+
+.nabilion-logo:hover {
+    animation-play-state: paused;
+    transform: scale(1.1);
+    transition: transform 0.3s ease;
+}
+
 @media (max-width: 768px) {
     .hero h1 { font-size: 2.5rem; }
     .hero p { font-size: 1.1rem; }
@@ -389,30 +415,4 @@ body {
     .features-grid { 
         grid-template-columns: 1fr; 
     }
-}
-
-.nabilion-logo {
-    width: 100px;
-    height: 100px;
-    margin-right: -40px;
-    margin-bottom: 10px;
-    vertical-align: middle;
-    animation: float 3s ease-in-out infinite, rotate 8s linear infinite;
-    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.5));
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-8px); }
-}
-
-@keyframes rotate {
-    0% { transform: rotateZ(0deg); }
-    100% { transform: rotateZ(360deg); }
-}
-
-.nabilion-logo:hover {
-    animation-play-state: paused;
-    transform: scale(1.1);
-    transition: transform 0.3s ease;
 }
