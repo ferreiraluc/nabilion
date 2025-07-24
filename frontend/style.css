@@ -416,7 +416,7 @@ body {
     /* Logo abaixo do nome no mobile */
     .nabilion-logo {
         order: 2;
-        margin-right: 0px;
+        margin-right: 0;
         margin-top: 10px;
     }
     
