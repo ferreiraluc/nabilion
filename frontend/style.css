@@ -389,15 +389,31 @@ body {
 }
 
 @media (max-width: 768px) {
-    .hero h1 { font-size: 2.5rem; }
-    .hero p { font-size: 1.1rem; }
+    .hero h1 { 
+        font-size: 2.5rem; 
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .hero p { 
+        font-size: 1.1rem; 
+    }
+    
+    /* Texto encurtado para mobile */
     .hero p::after {
         content: "Trading Automatizado com IA para Criptomoedas";
     }
-    .container { padding: 15px; }
-    .stats-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-    .features-grid { grid-template-columns: 1fr; }
-
+    
+    .hero p {
+        font-size: 0;
+    }
+    
+    .hero p::after {
+        font-size: 1.1rem;
+    }
+    
+    /* Logo abaixo do nome no mobile */
     .nabilion-logo {
         order: 2;
         margin-right: 0;
