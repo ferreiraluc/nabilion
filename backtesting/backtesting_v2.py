@@ -6,10 +6,10 @@ from pybit.unified_trading import HTTP
 from results_manager import ResultsManager
 
 # ===== CONFIGURAÇÕES =====
-cripto = 'SOLUSDT'
+cripto = 'XRPUSDT'
 tempo_grafico = '60'
-data_inicio = '2024-01-01'
-data_fim = '2024-01-29'
+data_inicio = '2025-05-01'
+data_fim = '2025-05-29'
 taxa_corretora = 0.055
 alavancagem = 2
 saldo_inicial = 1000
