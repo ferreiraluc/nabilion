@@ -11,7 +11,7 @@ from feature_engineering import FeatureEngineer
 from ml_predictor import MLPredictor
 from chart_predictor import ChartPredictor
 from funcoes_bybit import busca_velas
-from typing import Dict, List, Optional
+from typing import Dict, List
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -59,11 +59,10 @@ class QuantitativeAnalyzer:
                 dashboard = self.chart_predictor.create_comprehensive_dashboard(
                     symbol, timeframe, emas
                 )
-                if dashboard:
-                    charts = dashboard['charts']
+                if dashboard and dashboard.get('charts'):
                     # Salvar charts
                     saved_files = self.chart_predictor.save_charts_html(
-                        charts, symbol, f"charts/{symbol}/"
+                        dashboard['charts'], symbol, f"charts/{symbol}/"
                     )
                     analysis_report['chart_files'] = saved_files
             

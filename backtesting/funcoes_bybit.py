@@ -38,8 +38,8 @@ def busca_velas(cripto, tempo_grafico, emas):
     
     #Calcular RSI
     delta = df['close'].diff()
-    gain = (delta.where(delta > 0, 0)).ewm(span=14).mean()
-    loss = (-delta.where(delta < 0, 0)).ewm(span=14).mean()
+    gain = (delta.where(delta > 0, 0)).ewm(span=14).mean()  # type: ignore
+    loss = (-delta.where(delta < 0, 0)).ewm(span=14).mean()  # type: ignore
     rs = gain / loss
     df['RSI'] = 100 - (100 / (1 + rs))
     
@@ -49,7 +49,7 @@ def busca_velas(cripto, tempo_grafico, emas):
 
 def tem_trade_aberto(cripto):
     resposta = cliente.get_positions(category='linear', symbol=cripto, recv_window=50000)
-    dados = resposta['result']['list'][0]
+    dados = resposta['result']['list'][0]  # type: ignore
 
     preco_entrada = dados['avgPrice']
     if preco_entrada == '':
@@ -81,12 +81,12 @@ def tem_trade_aberto(cripto):
 
 def saldo_da_conta():
     resposta = cliente.get_wallet_balance(accountType='UNIFIED', coin='USDT')
-    saldo_em_usdt = resposta['result']['list'][0]['coin'][0]['walletBalance']
+    saldo_em_usdt = resposta['result']['list'][0]['coin'][0]['walletBalance']  # type: ignore
     return float(saldo_em_usdt)
 
 def quantidade_minima_para_operar(cripto):
     resposta = cliente.get_instruments_info(category='linear', symbol=cripto)
-    quantidade_minima_para_operar = resposta['result']['list'][0]['lotSizeFilter']['minOrderQty']
+    quantidade_minima_para_operar = resposta['result']['list'][0]['lotSizeFilter']['minOrderQty']  # type: ignore
     return float(quantidade_minima_para_operar)
 
 
@@ -172,7 +172,7 @@ def carregar_dados_historicos(cripto, tempo_grafico, emas, start, end, pular_vel
 
 def reduzir_posicao(cripto, percentual):
     try:
-        posicoes = cliente.get_positions(category="linear", symbol=cripto)['result']['list']
+        posicoes = cliente.get_positions(category="linear", symbol=cripto)['result']['list']  # type: ignore
         for pos in posicoes:
             if float(pos['size']) > 0:
                 tamanho_atual = float(pos['size'])
@@ -261,9 +261,9 @@ def stop_breakeven_compra(cripto, preco_entrada, preco_parcial, estado_trade, pr
                     symbol=cripto,
                     stopLoss=round(preco_entrada, 4)
                 )
-                if resposta['retCode'] == 0:
+                if resposta['retCode'] == 0:  # type: ignore
                     return True
-                elif resposta['retCode'] == 34040:
+                elif resposta['retCode'] == 34040:  # type: ignore
                     print('Stop já estava no breakeven. Nada a modificar.', flush=True)
                 else:
                     print(f'Erro ao mover stop: {resposta}', flush=True)
@@ -283,9 +283,9 @@ def stop_breakeven_venda(cripto, preco_entrada, preco_parcial, estado_trade, pre
                     symbol=cripto,
                     stopLoss=round(preco_entrada, 4)
                 )
-                if resposta['retCode'] == 0:
+                if resposta['retCode'] == 0:  # type: ignore
                     return True
-                elif resposta['retCode'] == 34040:
+                elif resposta['retCode'] == 34040:  # type: ignore
                     print('Stop já estava no breakeven. Nada a modificar.', flush=True)
                 else:
                     print(f'Erro ao mover stop: {resposta}', flush=True)

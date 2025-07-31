@@ -329,7 +329,7 @@ class ChartPredictor:
         return fig
     
     def create_comprehensive_dashboard(self, symbol: str, timeframe: str = '60', 
-                                     emas: List[int] = [9, 21]) -> Dict[str, go.Figure]:
+                                     emas: List[int] = [9, 21]) -> Dict:
         """Cria dashboard completo de análise"""
         
         print(f"Criando dashboard para {symbol}...")

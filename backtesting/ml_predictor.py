@@ -9,11 +9,10 @@ import numpy as np
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, VotingRegressor
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.svm import SVR
-from sklearn.preprocessing import StandardScaler, RobustScaler
-from sklearn.model_selection import train_test_split, cross_val_score, TimeSeriesSplit
+from sklearn.preprocessing import RobustScaler
+from sklearn.model_selection import cross_val_score
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import plotly.graph_objects as go
-import plotly.express as px
 from plotly.subplots import make_subplots
 from feature_engineering import FeatureEngineer
 from funcoes_bybit import busca_velas
@@ -173,7 +172,7 @@ class MLPredictor:
         
         return evaluation_results
     
-    def create_ensemble_model(self, training_results: Dict) -> VotingRegressor:
+    def create_ensemble_model(self, training_results: Dict) -> Optional[VotingRegressor]:
         """Cria modelo ensemble com os melhores modelos"""
         # Selecionar modelos com CV score > 0
         good_models = [(name, result['model']) 
@@ -189,7 +188,7 @@ class MLPredictor:
         
         return ensemble
     
-    def get_best_model(self, evaluation_results: Dict) -> Tuple[str, Dict]:
+    def get_best_model(self, evaluation_results: Dict) -> Tuple[Optional[str], Optional[Dict]]:
         """Retorna o melhor modelo baseado no R² score"""
         if not evaluation_results:
             return None, None
@@ -308,6 +307,9 @@ class MLPredictor:
             
             # Melhor modelo
             best_model_name, best_result = self.get_best_model(evaluation_results)
+            
+            if best_model_name is None or best_result is None:
+                return {'error': 'Nenhum modelo válido foi treinado com sucesso'}
             
             # Predição próximo período
             next_prediction = self.predict_next_prices(df, best_model_name)

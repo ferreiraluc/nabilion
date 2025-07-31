@@ -6,13 +6,11 @@ Cria features avançadas baseadas nos indicadores existentes do sistema
 
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler, RobustScaler
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-import ta
+from sklearn.preprocessing import RobustScaler
+from sklearn.ensemble import RandomForestRegressor
+from ta import volatility, trend, momentum
 from funcoes_bybit import busca_velas
-from typing import List, Tuple, Dict
+from typing import List
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -108,9 +106,9 @@ class FeatureEngineer:
         
         try:
             # Bollinger Bands
-            df_features['bb_upper'] = ta.bollinger_hband(df['close'])
-            df_features['bb_lower'] = ta.bollinger_lband(df['close'])
-            df_features['bb_middle'] = ta.bollinger_mavg(df['close'])
+            df_features['bb_upper'] = volatility.bollinger_hband(df['close'])
+            df_features['bb_lower'] = volatility.bollinger_lband(df['close'])
+            df_features['bb_middle'] = volatility.bollinger_mavg(df['close'])
             df_features['bb_width'] = (df_features['bb_upper'] - df_features['bb_lower']) / df_features['bb_middle']
             df_features['bb_position'] = (df['close'] - df_features['bb_lower']) / (df_features['bb_upper'] - df_features['bb_lower'])
         except:
@@ -126,9 +124,9 @@ class FeatureEngineer:
         
         try:
             # MACD
-            df_features['macd'] = ta.macd(df['close'])
-            df_features['macd_signal'] = ta.macd_signal(df['close'])
-            df_features['macd_histogram'] = ta.macd_diff(df['close'])
+            df_features['macd'] = trend.macd(df['close'])
+            df_features['macd_signal'] = trend.macd_signal(df['close'])
+            df_features['macd_histogram'] = trend.macd_diff(df['close'])
         except:
             # Manual MACD
             ema_12 = df['close'].ewm(span=12).mean()
@@ -139,8 +137,8 @@ class FeatureEngineer:
         
         try:
             # Stochastic
-            df_features['stoch_k'] = ta.stoch(df['high'], df['low'], df['close'])
-            df_features['stoch_d'] = ta.stoch_signal(df['high'], df['low'], df['close'])
+            df_features['stoch_k'] = momentum.stoch(df['high'], df['low'], df['close'])
+            df_features['stoch_d'] = momentum.stoch_signal(df['high'], df['low'], df['close'])
         except:
             # Manual Stochastic
             period = 14
@@ -151,20 +149,20 @@ class FeatureEngineer:
         
         try:
             # ATR
-            df_features['atr'] = ta.atr(df['high'], df['low'], df['close'])
+            df_features['atr'] = volatility.average_true_range(df['high'], df['low'], df['close'])
         except:
             # Manual ATR
             high_low = df['high'] - df['low']
             high_close = np.abs(df['high'] - df['close'].shift())
             low_close = np.abs(df['low'] - df['close'].shift())
-            true_range = np.maximum(high_low, np.maximum(high_close, low_close))
+            true_range = pd.Series(np.maximum(high_low, np.maximum(high_close, low_close)), index=df.index)
             df_features['atr'] = true_range.rolling(14).mean()
         
         df_features['atr_ratio'] = df_features['atr'] / df['close']
         
         try:
             # Williams %R
-            df_features['williams_r'] = ta.wr(df['high'], df['low'], df['close'])
+            df_features['williams_r'] = momentum.williams_r(df['high'], df['low'], df['close'])
         except:
             # Manual Williams %R
             period = 14
@@ -174,7 +172,7 @@ class FeatureEngineer:
         
         try:
             # CCI
-            df_features['cci'] = ta.cci(df['high'], df['low'], df['close'])
+            df_features['cci'] = trend.cci(df['high'], df['low'], df['close'])
         except:
             # Manual CCI
             period = 20

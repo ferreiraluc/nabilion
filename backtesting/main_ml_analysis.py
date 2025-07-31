@@ -4,10 +4,10 @@ Sistema Principal de Análise ML para Trading
 Integração completa: Feature Engineering + ML Predictions + Visualizations
 """
 
-import pandas as pd
 import numpy as np
 from datetime import datetime
 import os
+from typing import Optional
 
 # Importar nossos módulos
 from feature_engineering import FeatureEngineer
@@ -24,31 +24,34 @@ class TradingMLSystem:
     def analyze_crypto(self, symbol: str, timeframe: str = '60', emas: list = [9, 21]):
         """Análise completa de uma criptomoeda"""
         
-        print(f"\n🚀 ANÁLISE ML COMPLETA - {symbol}")
+        print(f"\n ANÁLISE ML COMPLETA - {symbol}")
         print("="*50)
         
         try:
             # 1. Carregar dados históricos
-            print("📊 Carregando dados históricos...")
+            print(" Carregando dados históricos...")
             df = busca_velas(symbol, timeframe, emas)
             print(f"✓ {len(df)} velas carregadas ({timeframe}min)")
             
             # 2. Processar features
-            print("\n🔧 Processando features...")
-            df_features = self.feature_engineer.engineer_all_features(df)
+            print("\n Processando features...")
+            self.feature_engineer.engineer_all_features(df)
             print(f"✓ {len(self.feature_engineer.feature_names)} features criadas")
             
             # 3. Preparar dados para ML
-            print("\n🤖 Preparando modelos ML...")
+            print("\n Preparando modelos ML...")
             X_train, X_test, y_train, y_test = self.ml_predictor.prepare_data(df)
             
             # 4. Treinar e avaliar modelos
-            print("\n📈 Treinando modelos...")
+            print("\n Treinando modelos...")
             training_results = self.ml_predictor.train_models(X_train, y_train)
             evaluation_results = self.ml_predictor.evaluate_models(X_test, y_test, training_results)
             
             # 5. Selecionar melhor modelo
             best_model_name, best_result = self.ml_predictor.get_best_model(evaluation_results)
+            
+            if best_model_name is None or best_result is None:
+                return {'error': 'Nenhum modelo válido foi treinado com sucesso'}
             
             # 6. Fazer predição para próximo período
             print(f"\n🎯 Gerando predição com {best_model_name}...")
@@ -84,7 +87,7 @@ class TradingMLSystem:
             return analysis_result
             
         except Exception as e:
-            print(f"❌ Erro na análise: {e}")
+            print(f"Erro na análise: {e}")
             import traceback
             traceback.print_exc()
             return {'error': str(e)}
@@ -92,20 +95,20 @@ class TradingMLSystem:
     def _print_analysis_report(self, result: dict):
         """Imprime relatório da análise"""
         
-        print(f"\n📋 RELATÓRIO DE ANÁLISE")
+        print(f"\nRELATÓRIO DE ANÁLISE")
         print("="*50)
         
         # Informações dos dados
         data_info = result['data_info']
-        print(f"📊 Dados: {data_info['candles']} velas, {data_info['features']} features")
-        print(f"🔢 Treino: {data_info['train_samples']} | Teste: {data_info['test_samples']}")
+        print(f"Dados: {data_info['candles']} velas, {data_info['features']} features")
+        print(f"Treino: {data_info['train_samples']} | Teste: {data_info['test_samples']}")
         
         # Performance do melhor modelo
         best_model = result['best_model']
-        print(f"\n🏆 Melhor Modelo: {best_model['name'].upper()}")
-        print(f"📈 R² Score: {best_model['r2_score']:.4f}")
-        print(f"📊 MAE: {best_model['mae']:.6f}")
-        print(f"🎯 Acurácia Direcional: {best_model['direction_accuracy']:.1%}")
+        print(f"\nMelhor Modelo: {best_model['name'].upper()}")
+        print(f"R² Score: {best_model['r2_score']:.4f}")
+        print(f"MAE: {best_model['mae']:.6f}")
+        print(f"Acurácia Direcional: {best_model['direction_accuracy']:.1%}")
         
         # Predição
         prediction = result['prediction']
@@ -152,15 +155,15 @@ class TradingMLSystem:
                 if 'error' not in result:
                     results.append(result)
                 else:
-                    print(f"❌ Falha na análise de {symbol}")
+                    print(f"Falha na análise de {symbol}")
                     
             except Exception as e:
-                print(f"❌ Erro em {symbol}: {e}")
+                print(f"Erro em {symbol}: {e}")
                 continue
         
         # Ranking por performance
         if results:
-            print(f"\n🏆 RANKING POR ACURÁCIA DIRECIONAL")
+            print(f"\n RANKING POR ACURÁCIA DIRECIONAL")
             print("="*60)
             
             ranked = sorted(results, key=lambda x: x['best_model']['direction_accuracy'], reverse=True)
@@ -180,7 +183,7 @@ class TradingMLSystem:
         
         return results
     
-    def save_analysis_report(self, result: dict, filename: str = None):
+    def save_analysis_report(self, result: dict, filename: Optional[str] = None):
         """Salva relatório em arquivo"""
         
         if filename is None or filename == '':
@@ -212,7 +215,7 @@ class TradingMLSystem:
         with open(filepath, 'w') as f:
             json.dump(clean_result, f, indent=2, default=str)
         
-        print(f"💾 Relatório salvo: {filepath}")
+        print(f" Relatório salvo: {filepath}")
         return filepath
 
 # Exemplos de uso
@@ -241,7 +244,7 @@ def menu_interativo():
     system = TradingMLSystem()
     
     while True:
-        print(f"\n🤖 SISTEMA ML TRADING")
+        print(f"\nSISTEMA ML TRADING")
         print("="*30)
         print("1. Analisar crypto individual")
         print("2. Analisar múltiplas cryptos")
@@ -270,15 +273,15 @@ def menu_interativo():
             system.analyze_crypto('BTCUSDT', '60', [9, 21])
         
         elif escolha == '4':
-            print("👋 Saindo do sistema...")
+            print(" Saindo do sistema...")
             break
         
         else:
-            print("❌ Opção inválida!")
+            print("Opção inválida!")
 
 if __name__ == "__main__":
     # Executar análise de exemplo
-    print("🚀 Iniciando exemplo de análise...")
+    print(" Iniciando exemplo de análise...")
     resultado = exemplo_analise_individual()
     
     # Opcional: menu interativo
