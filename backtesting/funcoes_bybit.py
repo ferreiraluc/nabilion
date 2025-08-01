@@ -121,18 +121,26 @@ def abre_venda(cripto, qtd_cripto_para_operar, preco_stop, preco_alvo):
         takeProfit=preco_alvo
     )
     
-def set_leverage(cliente, symbol, leverage=20):
+def set_leverage(cliente, symbol, leverage):
     try:
+        # Primeiro tenta configurar a alavancagem
         resposta = cliente.set_leverage(
-            category='linear',  # Para contratos perpétuos USDT
+            category='linear',
             symbol=symbol,
-            buyLeverage=leverage,  # Alavancagem para compra
-            sellLeverage=leverage  # Alavancagem para venda
+            buyLeverage=str(leverage),  # API pode exigir string
+            sellLeverage=str(leverage)
         )
         print(f"Alavancagem configurada para {leverage}x no símbolo {symbol}", flush=True)
         return resposta
     except Exception as e:
-        print(f"Erro ao configurar a alavancagem: {e}", flush=True)
+        print(f"Erro ao configurar alavancagem {leverage}x: {e}", flush=True)
+        # Tenta com alavancagem menor se falhar
+        # Verifica se o erro é por posição existente
+        if "position" in str(e).lower() or "110043" in str(e):
+            print(f"Não é possível alterar alavancagem com posição aberta em {symbol}", flush=True)
+            return None
+        # Continua sem alterar alavancagem
+        print(f"Continuando com alavancagem atual do exchange para {symbol}", flush=True)
         return None
     
 def carregar_dados_historicos(cripto, tempo_grafico, emas, start, end, pular_velas=999):
