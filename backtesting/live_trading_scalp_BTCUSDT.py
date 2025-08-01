@@ -15,21 +15,39 @@ SECRET_KEY = os.getenv('BYBIT_API_SECRET')
 cliente = HTTP(api_key=API_KEY, api_secret=SECRET_KEY)
 
 cripto = 'BTCUSDT'
-tempo_grafico = '60'
+tempo_grafico = '5'
 qtd_velas_stop = 17
-risco_retorno = 3.1
+risco_retorno = 2.8
 emas = [9, 21]
 ema_rapida = emas[0]
 ema_lenta = emas[1]
-alavancagem = 2
+alavancagem = 20
 
 # ===== Função para calcular ATR =====
-def calcular_atr(df, periodo=40):
+def calcular_atr(df, periodo=20):
     df['high_low'] = df['high'] - df['low']
     df['high_close'] = abs(df['high'] - df['close'].shift())
     df['low_close'] = abs(df['low'] - df['close'].shift())
     df['tr'] = df[['high_low', 'high_close', 'low_close']].max(axis=1)
     df['ATR'] = df['tr'].rolling(window=periodo).mean()
+    return df
+
+# ===== Função para calcular Bollinger Bands =====
+def calcular_bollinger_bands(df, periodo=20, desvio=2):
+    df['BB_Middle'] = df['close'].rolling(window=periodo).mean()
+    df['BB_Std'] = df['close'].rolling(window=periodo).std()
+    df['BB_Upper'] = df['BB_Middle'] + (df['BB_Std'] * desvio)
+    df['BB_Lower'] = df['BB_Middle'] - (df['BB_Std'] * desvio)
+    df['BB_Width'] = (df['BB_Upper'] - df['BB_Lower']) / df['BB_Middle']
+    return df
+
+# ===== Função para calcular RSI otimizado para scalping =====
+def calcular_rsi_scalping(df, periodo=3):
+    delta = df['close'].diff()
+    gain = (delta.where(delta > 0, 0)).ewm(span=periodo).mean()
+    loss = (-delta.where(delta < 0, 0)).ewm(span=periodo).mean()
+    rs = gain / loss
+    df['RSI_Fast'] = 100 - (100 / (1 + rs))
     return df
 
 print('Bot started', flush=True)
@@ -70,6 +88,8 @@ while True:
 
             
         df = calcular_atr(df)
+        df = calcular_bollinger_bands(df)
+        df = calcular_rsi_scalping(df)
 
         if len(df) < qtd_velas_stop + 2:
             print(f'DataFrame com poucas velas ({len(df)}). Esperando pelo menos {qtd_velas_stop + 2}...')
@@ -137,15 +157,18 @@ while True:
 
             atr_atual = df['ATR'].iloc[-1]
 
-            # ======= COMPRA AGRESSIVA =======
+            # ======= COMPRA OTIMIZADA (Scalping Avançado) =======
             if (
-                df['RSI'].iloc[-2] < 30 and
-                df['volume'].iloc[-1] > df['Volume_EMA_20'].iloc[-1] and
-                df['high'].iloc[-1] > df['high'].iloc[-2] and
-                df[f'EMA_{ema_rapida}'].iloc[-2] > df[f'EMA_{ema_lenta}'].iloc[-2] > df['EMA_200'].iloc[-2]
+                df['RSI_Fast'].iloc[-2] < 20 and                              # RSI mais sensível para scalping
+                df['RSI_Fast'].iloc[-1] > df['RSI_Fast'].iloc[-2] and         # Confirmação de reversão
+                df['close'].iloc[-2] <= df['BB_Lower'].iloc[-2] and           # Preço tocou banda inferior
+                df['close'].iloc[-1] > df['BB_Lower'].iloc[-1] and            # Saindo da banda inferior
+                df['volume'].iloc[-1] > df['Volume_EMA_20'].iloc[-1] * 1.2 and # Volume 20% acima da média
+                df['BB_Width'].iloc[-1] > 0.02 and                            # Volatilidade mínima para scalping
+                df[f'EMA_{ema_rapida}'].iloc[-2] > df[f'EMA_{ema_lenta}'].iloc[-2] # Trend de alta
             ):
-                preco_entrada = df['high'].iloc[-2]
-                preco_stop = preco_entrada - (atr_atual * 4)  
+                preco_entrada = df['close'].iloc[-1]  # Entrada mais precisa no fechamento atual
+                preco_stop = df['BB_Lower'].iloc[-1] * 0.999  # Stop ligeiramente abaixo da banda inferior  
 
                 # Filtro anti-stop ultra curto
                 if (preco_entrada - preco_stop) < atr_atual:
@@ -159,15 +182,18 @@ while True:
                     abre_parcial_compra(cripto, qtd_cripto_para_operar, preco_entrada)
 
 
-            # ======= VENDA AGRESSIVA =======
+            # ======= VENDA OTIMIZADA (Scalping Avançado) =======
             elif (
-                df['RSI'].iloc[-2] > 70 and
-                df['volume'].iloc[-1] > df['Volume_EMA_20'].iloc[-1] and
-                df['low'].iloc[-1] < df['low'].iloc[-2] and
-                df[f'EMA_{ema_rapida}'].iloc[-2] < df[f'EMA_{ema_lenta}'].iloc[-2] < df['EMA_200'].iloc[-2]
+                df['RSI_Fast'].iloc[-2] > 80 and                              # RSI mais sensível para scalping
+                df['RSI_Fast'].iloc[-1] < df['RSI_Fast'].iloc[-2] and         # Confirmação de reversão
+                df['close'].iloc[-2] >= df['BB_Upper'].iloc[-2] and           # Preço tocou banda superior
+                df['close'].iloc[-1] < df['BB_Upper'].iloc[-1] and            # Saindo da banda superior
+                df['volume'].iloc[-1] > df['Volume_EMA_20'].iloc[-1] * 1.2 and # Volume 20% acima da média
+                df['BB_Width'].iloc[-1] > 0.02 and                            # Volatilidade mínima para scalping
+                df[f'EMA_{ema_rapida}'].iloc[-2] < df[f'EMA_{ema_lenta}'].iloc[-2] # Trend de baixa
             ):
-                preco_entrada = df['low'].iloc[-2]
-                preco_stop = preco_entrada + (atr_atual * 4)   
+                preco_entrada = df['close'].iloc[-1]  # Entrada mais precisa no fechamento atual
+                preco_stop = df['BB_Upper'].iloc[-1] * 1.001  # Stop ligeiramente acima da banda superior   
 
                 if (preco_stop - preco_entrada) < atr_atual:
                     print("Stop de venda muito curto comparado ao ATR, ignorando entrada.")

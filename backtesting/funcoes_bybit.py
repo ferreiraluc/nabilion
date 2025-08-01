@@ -121,7 +121,7 @@ def abre_venda(cripto, qtd_cripto_para_operar, preco_stop, preco_alvo):
         takeProfit=preco_alvo
     )
     
-def set_leverage(cliente, symbol, leverage=2):
+def set_leverage(cliente, symbol, leverage=20):
     try:
         resposta = cliente.set_leverage(
             category='linear',  # Para contratos perpétuos USDT
