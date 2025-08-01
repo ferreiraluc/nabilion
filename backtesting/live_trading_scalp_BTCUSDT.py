@@ -1,6 +1,6 @@
 from pybit.unified_trading import HTTP
 from estado_trade import EstadoDeTrade
-from funcoes_bybit import busca_velas, tem_trade_aberto, saldo_da_conta, quantidade_minima_para_operar, abre_compra, abre_venda, abre_parcial_venda, abre_parcial_compra, stop_breakeven_compra, stop_breakeven_venda
+from funcoes_bybit import busca_velas, tem_trade_aberto, saldo_da_conta, quantidade_minima_para_operar, abre_compra, abre_venda, abre_parcial_venda, abre_parcial_compra, stop_breakeven_compra, stop_breakeven_venda, set_leverage
 from utilidades import quantidade_cripto_para_operar
 import time
 from dotenv import load_dotenv
@@ -38,6 +38,9 @@ print(f'Tempo gráfico: {tempo_grafico}', flush=True)
 print(f'Velas Stop: {qtd_velas_stop}', flush=True)
 print(f'Risco/Retorno: {risco_retorno}', flush=True)
 print(f'EMAs: {emas}', flush=True)
+
+# Configurar alavancagem
+set_leverage(cliente, cripto, alavancagem)
 
 for tentativa in range(5):
     try:

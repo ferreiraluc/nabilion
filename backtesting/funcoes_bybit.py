@@ -121,15 +121,15 @@ def abre_venda(cripto, qtd_cripto_para_operar, preco_stop, preco_alvo):
         takeProfit=preco_alvo
     )
     
-def set_leverage(cliente):
+def set_leverage(cliente, symbol, leverage=2):
     try:
         resposta = cliente.set_leverage(
             category='linear',  # Para contratos perpétuos USDT
-            symbol='BTCUSDT',
-            buyLeverage=10,  # Alavancagem para compra
-            sellLeverage=10  # Alavancagem para venda
+            symbol=symbol,
+            buyLeverage=leverage,  # Alavancagem para compra
+            sellLeverage=leverage  # Alavancagem para venda
         )
-        print(f"Alavancagem configurada para 10x no símbolo BTCUSDT", flush=True)
+        print(f"Alavancagem configurada para {leverage}x no símbolo {symbol}", flush=True)
         return resposta
     except Exception as e:
         print(f"Erro ao configurar a alavancagem: {e}", flush=True)
