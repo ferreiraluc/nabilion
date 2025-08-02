@@ -9,6 +9,38 @@ body {
     background: linear-gradient(135deg, #1a1611 0%, #2d2419 50%, #3d3022 100%);
     color: #f5e6a8;
     min-height: 100vh;
+    position: relative;
+}
+
+/* Dashboard Button */
+.dashboard-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(45deg, #ffd700, #daa520);
+    color: #1a1611;
+    padding: 12px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+    z-index: 1000;
+    border: 1px solid rgba(255, 215, 0, 0.4);
+}
+
+.dashboard-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+    background: linear-gradient(45deg, #ffed4e, #e3c547);
+}
+
+.dashboard-btn i {
+    font-size: 1rem;
 }
 
 .container {
@@ -414,6 +446,17 @@ body {
 }
 
 @media (max-width: 768px) {
+    .dashboard-btn {
+        top: 15px;
+        right: 15px;
+        padding: 10px 16px;
+        font-size: 0.8rem;
+    }
+    
+    .dashboard-btn i {
+        font-size: 0.9rem;
+    }
+    
     .hero h1 { 
         font-size: 2.5rem; 
         flex-direction: column;

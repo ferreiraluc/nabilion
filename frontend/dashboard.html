@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nabilion Dashboard - Trading Robot Performance</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Navigation Header -->
+        <nav class="navbar">
+            <div class="nav-brand">
+                <img src="assets/images/nabilion-FRONT.png" alt="Nabilion" class="nav-logo">
+                <span class="nav-title">Dashboard</span>
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <div class="nav-link active">
+                    <i class="fas fa-chart-line"></i> Dashboard
+                </div>
+            </div>
+        </nav>
+
+        <div class="dashboard-container">
+            <!-- Hero Performance Section -->
+            <section class="hero-performance">
+                <div class="performance-hero">
+                    <div class="hero-metrics">
+                        <div class="metric-main">
+                            <div class="metric-value">{{ totalProfit }}%</div>
+                            <div class="metric-label">Total Performance</div>
+                            <div class="metric-period">Último Mês</div>
+                        </div>
+                        <div class="metric-stats">
+                            <div class="stat-item">
+                                <span class="stat-value">{{ totalTrades }}</span>
+                                <span class="stat-label">Total Trades</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value">{{ winRate }}%</span>
+                                <span class="stat-label">Win Rate</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value">{{ avgRR }}</span>
+                                <span class="stat-label">Avg R:R</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="performance-chart-mini">
+                        <canvas id="heroChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Live Trading Status -->
+            <section class="live-status">
+                <h2 class="section-title">
+                    <i class="fas fa-satellite-dish pulse"></i>
+                    Status dos Bots em Tempo Real
+                </h2>
+                <div class="bots-grid">
+                    <div v-for="bot in liveBots" :key="bot.id" class="bot-card-live">
+                        <div class="bot-header">
+                            <div class="bot-symbol">{{ bot.symbol }}</div>
+                            <div :class="['bot-status-indicator', bot.status]">
+                                <i class="fas fa-circle"></i>
+                            </div>
+                        </div>
+                        <div class="bot-current-trade" v-if="bot.currentTrade">
+                            <div class="trade-info">
+                                <span class="trade-side" :class="bot.currentTrade.side">
+                                    {{ bot.currentTrade.side.toUpperCase() }}
+                                </span>
+                                <span class="trade-entry">${{ bot.currentTrade.entry }}</span>
+                            </div>
+                            <div class="trade-pnl" :class="bot.currentTrade.pnl >= 0 ? 'positive' : 'negative'">
+                                {{ bot.currentTrade.pnl >= 0 ? '+' : '' }}{{ bot.currentTrade.pnl }}%
+                            </div>
+                        </div>
+                        <div class="bot-metrics-mini">
+                            <div class="metric-mini">
+                                <span class="metric-label">24h P&L</span>
+                                <span class="metric-value" :class="bot.dailyPnl >= 0 ? 'positive' : 'negative'">
+                                    {{ bot.dailyPnl >= 0 ? '+' : '' }}{{ bot.dailyPnl }}%
+                                </span>
+                            </div>
+                            <div class="metric-mini">
+                                <span class="metric-label">Win Rate</span>
+                                <span class="metric-value">{{ bot.winRate }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ML Analysis Section -->
+            <section class="ml-analysis">
+                <h2 class="section-title">
+                    <i class="fas fa-brain"></i>
+                    Análise de Machine Learning
+                </h2>
+                <div class="ml-cards">
+                    <div class="ml-card">
+                        <div class="ml-header">
+                            <h3>Modelo de Predição BTC</h3>
+                            <div class="ml-accuracy">{{ mlData.accuracy }}% precisão</div>
+                        </div>
+                        <div class="ml-prediction">
+                            <div class="prediction-main">
+                                <div class="predicted-price">
+                                    <span class="current-price">${{ mlData.currentPrice }}</span>
+                                    <i class="fas fa-arrow-right"></i>
+                                    <span class="target-price" :class="mlData.direction.toLowerCase()">
+                                        ${{ mlData.predictedPrice }}
+                                    </span>
+                                </div>
+                                <div class="prediction-direction" :class="mlData.direction.toLowerCase()">
+                                    <i :class="mlData.direction === 'UP' ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                                    {{ mlData.direction }}
+                                </div>
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" :style="{ width: mlData.confidence + '%' }"></div>
+                                <span class="confidence-text">{{ mlData.confidence }}% confiança</span>
+                            </div>
+                        </div>
+                        <div class="top-features">
+                            <h4>Top Features Impact</h4>
+                            <div class="features-list">
+                                <div v-for="feature in mlData.topFeatures.slice(0,5)" :key="feature.name" class="feature-item">
+                                    <span class="feature-name">{{ feature.name }}</span>
+                                    <div class="feature-importance">
+                                        <div class="importance-bar" :style="{ width: (feature.importance * 100) + '%' }"></div>
+                                        <span class="importance-value">{{ (feature.importance * 100).toFixed(1) }}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Strategy Performance -->
+            <section class="strategy-performance">
+                <h2 class="section-title">
+                    <i class="fas fa-chess"></i>
+                    Performance das Estratégias
+                </h2>
+                <div class="strategy-tabs">
+                    <button 
+                        v-for="strategy in strategies" 
+                        :key="strategy.id"
+                        :class="['strategy-tab', { active: activeStrategy === strategy.id }]"
+                        @click="activeStrategy = strategy.id"
+                    >
+                        {{ strategy.name }}
+                    </button>
+                </div>
+                <div class="strategy-content">
+                    <div class="strategy-stats">
+                        <div class="strategy-metric">
+                            <div class="metric-value">{{ currentStrategy.totalReturn }}%</div>
+                            <div class="metric-label">Total Return</div>
+                        </div>
+                        <div class="strategy-metric">
+                            <div class="metric-value">{{ currentStrategy.sharpeRatio }}</div>
+                            <div class="metric-label">Sharpe Ratio</div>
+                        </div>
+                        <div class="strategy-metric">
+                            <div class="metric-value">{{ currentStrategy.maxDrawdown }}%</div>
+                            <div class="metric-label">Max Drawdown</div>
+                        </div>
+                        <div class="strategy-metric">
+                            <div class="metric-value">{{ currentStrategy.winRate }}%</div>
+                            <div class="metric-label">Win Rate</div>
+                        </div>
+                    </div>
+                    <div class="strategy-chart">
+                        <canvas id="strategyChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Backtesting Results -->
+            <section class="backtesting-section">
+                <h2 class="section-title">
+                    <i class="fas fa-history"></i>
+                    Resultados de Backtesting
+                </h2>
+                <div class="backtesting-summary">
+                    <div class="backtest-card">
+                        <div class="backtest-header">
+                            <h3>BTC Scalping Strategy</h3>
+                            <div class="backtest-period">Jan 2024 - Atual</div>
+                        </div>
+                        <div class="backtest-metrics">
+                            <div class="backtest-row">
+                                <span>Total de Trades:</span>
+                                <span class="value">1,247</span>
+                            </div>
+                            <div class="backtest-row">
+                                <span>Trades Vencedores:</span>
+                                <span class="value positive">823 (66%)</span>
+                            </div>
+                            <div class="backtest-row">
+                                <span>Profit Factor:</span>
+                                <span class="value">2.34</span>
+                            </div>
+                            <div class="backtest-row">
+                                <span>Retorno Total:</span>
+                                <span class="value positive">+187.3%</span>
+                            </div>
+                            <div class="backtest-row">
+                                <span>Max Drawdown:</span>
+                                <span class="value negative">-12.4%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="backtest-chart">
+                        <canvas id="backtestChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Risk Management Dashboard -->
+            <section class="risk-management">
+                <h2 class="section-title">
+                    <i class="fas fa-shield-alt"></i>
+                    Gestão de Risco Avançada
+                </h2>
+                <div class="risk-grid">
+                    <div class="risk-card">
+                        <div class="risk-icon"><i class="fas fa-percentage"></i></div>
+                        <div class="risk-value">{{ riskMetrics.riskPerTrade }}%</div>
+                        <div class="risk-label">Risco por Trade</div>
+                        <div class="risk-status safe">SEGURO</div>
+                    </div>
+                    <div class="risk-card">
+                        <div class="risk-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="risk-value">{{ riskMetrics.currentRR }}</div>
+                        <div class="risk-label">R:R Atual</div>
+                        <div class="risk-status optimal">ÓTIMO</div>
+                    </div>
+                    <div class="risk-card">
+                        <div class="risk-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                        <div class="risk-value">{{ riskMetrics.maxDrawdown }}%</div>
+                        <div class="risk-label">Max Drawdown</div>
+                        <div class="risk-status" :class="riskMetrics.maxDrawdown > 15 ? 'warning' : 'safe'">
+                            {{ riskMetrics.maxDrawdown > 15 ? 'ATENÇÃO' : 'SEGURO' }}
+                        </div>
+                    </div>
+                    <div class="risk-card">
+                        <div class="risk-icon"><i class="fas fa-stopwatch"></i></div>
+                        <div class="risk-value">{{ riskMetrics.avgHoldTime }}h</div>
+                        <div class="risk-label">Tempo Médio</div>
+                        <div class="risk-status optimal">ÓTIMO</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Advanced Analytics -->
+            <section class="advanced-analytics">
+                <h2 class="section-title">
+                    <i class="fas fa-microscope"></i>
+                    Analytics Avançados
+                </h2>
+                <div class="analytics-tabs">
+                    <button 
+                        v-for="tab in analyticsTabs" 
+                        :key="tab.id"
+                        :class="['analytics-tab', { active: activeAnalytics === tab.id }]"
+                        @click="activeAnalytics = tab.id"
+                    >
+                        <i :class="tab.icon"></i>
+                        {{ tab.label }}
+                    </button>
+                </div>
+                <div class="analytics-content">
+                    <div v-if="activeAnalytics === 'heatmap'" class="heatmap-container">
+                        <h3>Mapa de Calor de Performance</h3>
+                        <div id="heatmapChart"></div>
+                    </div>
+                    <div v-if="activeAnalytics === 'correlation'" class="correlation-container">
+                        <h3>Correlação entre Indicadores</h3>
+                        <div id="correlationChart"></div>
+                    </div>
+                    <div v-if="activeAnalytics === 'distribution'" class="distribution-container">
+                        <h3>Distribuição de Retornos</h3>
+                        <div id="distributionChart"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Technology Stack -->
+            <section class="tech-showcase">
+                <h2 class="section-title">
+                    <i class="fas fa-microchip"></i>
+                    Tecnologia de Ponta
+                </h2>
+                <div class="tech-categories">
+                    <div class="tech-category">
+                        <h3><i class="fas fa-brain"></i> Machine Learning</h3>
+                        <div class="tech-list">
+                            <div class="tech-item">
+                                <span class="tech-name">Random Forest</span>
+                                <span class="tech-accuracy">{{ mlData.accuracy }}% precisão</span>
+                            </div>
+                            <div class="tech-item">
+                                <span class="tech-name">Feature Engineering</span>
+                                <span class="tech-features">138 features</span>
+                            </div>
+                            <div class="tech-item">
+                                <span class="tech-name">Ensemble Methods</span>
+                                <span class="tech-status">Ativo</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tech-category">
+                        <h3><i class="fas fa-chart-line"></i> Análise Técnica</h3>
+                        <div class="tech-list">
+                            <div class="tech-item">
+                                <span class="tech-name">RSI Otimizado</span>
+                                <span class="tech-period">3-período</span>
+                            </div>
+                            <div class="tech-item">
+                                <span class="tech-name">Bollinger Bands</span>
+                                <span class="tech-params">(20,2)</span>
+                            </div>
+                            <div class="tech-item">
+                                <span class="tech-name">ATR Dinâmico</span>
+                                <span class="tech-period">20-período</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tech-category">
+                        <h3><i class="fas fa-rocket"></i> Execução</h3>
+                        <div class="tech-list">
+                            <div class="tech-item">
+                                <span class="tech-name">Latência</span>
+                                <span class="tech-latency">< 50ms</span>
+                            </div>
+                            <div class="tech-item">
+                                <span class="tech-name">Uptime</span>
+                                <span class="tech-uptime">99.8%</span>
+                            </div>
+                            <div class="tech-item">
+                                <span class="tech-name">Trades/Dia</span>
+                                <span class="tech-frequency">15-25</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
