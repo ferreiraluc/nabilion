@@ -18,7 +18,7 @@ cliente = HTTP(api_key=API_KEY, api_secret=SECRET_KEY)
 
 # ===== CONFIGURAÇÕES APRIMORADAS =====
 cripto = 'XRPUSDT'
-tempo_grafico = '15'
+tempo_grafico = '60'
 qtd_velas_stop = 17
 risco_retorno = 3.1
 emas = [9, 21]
